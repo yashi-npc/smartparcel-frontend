@@ -1,0 +1,153 @@
+/* Hide radio buttons */
+input[type="radio"] {
+  display: none;
+}
+
+/* Main wrapper */
+.login-reg-panel {
+  position: relative;
+  width: 80%;
+  max-width: 900px;
+  margin: 5% auto;
+  background: #f7f7f7;
+  border-radius: 10px;
+  overflow: hidden;
+  box-shadow: 0 0 15px rgba(0,0,0,0.2);
+  display: flex;
+  min-height: 450px;
+  font-family: Arial, sans-serif;
+}
+
+/* Info boxes */
+.login-info-box,
+.register-info-box {
+  width: 50%;
+  padding: 60px 40px;
+  box-sizing: border-box;
+  background: #eaeaea;
+  text-align: center;
+  transition: background 0.3s ease;
+}
+
+.login-info-box label,
+.register-info-box label {
+  display: inline-block;
+  margin-top: 15px;
+  padding: 10px 20px;
+  background-color: #444;
+  color: #fff;
+  cursor: pointer;
+  border-radius: 4px;
+  font-size: 16px;
+  transition: background-color 0.3s ease;
+}
+
+.login-info-box label:hover,
+.register-info-box label:hover {
+  background-color: #222;
+}
+
+/* White sliding panel */
+.white-panel {
+  position: absolute;
+  top: 0;
+  left: 50%;
+  width: 50%;
+  height: 100%;
+  background: #fff;
+  padding: 60px 40px;
+  box-sizing: border-box;
+  transition: transform 0.6s ease-in-out;
+  z-index: 2;
+  box-shadow: 0 0 15px rgba(0,0,0,0.1);
+}
+
+.login-reg-panel input#log-reg-show:checked ~ .white-panel {
+  transform: translateX(-100%);
+}
+
+.login-reg-panel input#log-login-show:checked ~ .white-panel {
+  transform: translateX(0%);
+}
+
+/* Login/Register form sections */
+.login-show,
+.register-show {
+  display: none;
+}
+
+.show-log-panel.login-show,
+.show-log-panel.register-show {
+  display: block;
+}
+
+/* Headings */
+.login-show h2,
+.register-show h2 {
+  margin-bottom: 20px;
+  color: #333;
+}
+
+/* Form styles */
+input[type="text"],
+input[type="email"],
+input[type="password"],
+select {
+  display: block;
+  width: 100%;
+  margin-bottom: 15px;
+  padding: 10px;
+  font-size: 16px;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  box-sizing: border-box;
+}
+
+input[type="submit"],
+input[type="button"] {
+  background: #333;
+  color: #fff;
+  padding: 12px 20px;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: background 0.3s ease;
+}
+
+input[type="submit"]:hover,
+input[type="button"]:hover {
+  background: #555;
+}
+
+/* Forgot password link */
+.login-show a {
+  display: inline-block;
+  margin-top: 10px;
+  color: #0066cc;
+  text-decoration: none;
+}
+
+.login-show a:hover {
+  text-decoration: underline;
+}
+
+/* Responsive */
+@media screen and (max-width: 768px) {
+  .login-reg-panel {
+    flex-direction: column;
+    width: 95%;
+  }
+
+  .login-info-box,
+  .register-info-box {
+    width: 100%;
+    padding: 40px 20px;
+  }
+
+  .white-panel {
+    position: static;
+    width: 100%;
+    transform: none !important;
+    padding: 40px 20px;
+  }
+}
