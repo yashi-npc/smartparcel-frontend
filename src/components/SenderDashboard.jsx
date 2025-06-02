@@ -21,7 +21,7 @@ function SenderDashboard() {
   const [dashboardSearch, setDashboardSearch] = useState('');
   const [activePage, setActivePage] = useState('dashboard');
 
-  const handleSidebarNav = (page) => {
+   const handleSidebarNav = (page) => {
     setActivePage(page);
   };
     
@@ -111,8 +111,8 @@ function SenderDashboard() {
         <nav className="sidebar-nav">
           <ul>
             <li className={activePage === 'dashboard' ? 'active' : ''} onClick={() => handleSidebarNav('dashboard')}>Sender Dashboard</li>
+            <li className={activePage === 'createparcel' ? 'active' : ''} onClick={() => handleSidebarNav('createparcel')}>Create Parcel</li>
             <li className={activePage === 'track' ? 'active' : ''} onClick={() => handleSidebarNav('track')}>Track Parcel</li>
-            <li className={activePage === 'create' ? 'active' : ''} onClick={() => handleSidebarNav('create')}>Create Parcel</li>
             <li>Delivery Data</li>
             <li>Delivery Invoices</li>
             <li>App Integration</li>
@@ -219,7 +219,7 @@ function SenderDashboard() {
               </div>
             </>
           )}
-          {activePage === 'create' && (
+          {activePage === 'createparcel' && (
             <div className="delivery-report-card mb-4">
               <h4>Create Parcel</h4>
               <form onSubmit={handleCreateParcel} className="mb-3">
