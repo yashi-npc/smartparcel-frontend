@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import axios from 'axios';
 import './RegisterPage.css';
+
 const RegisterPage = () => {
   const navigate = useNavigate();
   const [form, setForm] = useState({
@@ -9,18 +10,18 @@ const RegisterPage = () => {
     email: '',
     password: '',
     confirmPassword: '',
-    role: 'sender', // default value
+    role: 'sender', // default role
   });
 
-  const handleChange = e => {
+  const handleChange = (e) => {
     setForm({ ...form, [e.target.name]: e.target.value });
   };
 
-  const handleSubmit = async e => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
 
     if (form.password !== form.confirmPassword) {
-        alert("Passwords do not match!");
+      alert("Passwords do not match!");
       return;
     }
 
@@ -39,8 +40,8 @@ const RegisterPage = () => {
   };
 
   return (
-    <div className="container mt-5" style={{ maxWidth: "400px" }}>
-      <h2 className="mb-4">Register</h2>
+    <div className="container mt-5" style={{ maxWidth: '400px' }}>
+      <h2 className="mb-4 text-center">Register</h2>
       <form onSubmit={handleSubmit}>
         <div className="mb-3">
           <label className="form-label">Name</label>
@@ -90,7 +91,7 @@ const RegisterPage = () => {
           />
         </div>
 
-        <div className="mb-3">
+        <div className="mb-4">
           <label className="form-label">Role</label>
           <select
             className="form-select"
