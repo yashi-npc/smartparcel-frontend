@@ -18,5 +18,5 @@ export const logout =()=> {
   // Clear any stored tokens or user data
   localStorage.removeItem('token');
   // redirect to login page
-  window.location.href = '/';
+  window.location.href = '/login';
 };

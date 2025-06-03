@@ -96,6 +96,12 @@ const LoginPage = () => {
               Register here
             </Link>
           </p>
+          <p className="mb-0">
+            {' '}
+            <Link to="/" style={{ color: '#2d5be3', textDecoration: 'none', fontWeight: '600' }}>
+              Back to homepage
+            </Link>
+          </p>
         </div>
       </div>
     </div>

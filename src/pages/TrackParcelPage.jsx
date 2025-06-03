@@ -48,13 +48,13 @@ function TrackParcelPage() {
               <li className="list-group-item"><strong>Recipient:</strong> {searchedParcel.recipientName}</li>
               <li className="list-group-item"><strong>Address:</strong> {searchedParcel.recipientAddress}</li>
               <li className="list-group-item"><strong>Weight:</strong> {searchedParcel.weight} kg</li>
+              <li className="list-group-item"><strong>Revenue:</strong> {searchedParcel.price} Rs</li>
               <li className="list-group-item"><strong>Type:</strong> {searchedParcel.type}</li>
               <li className="list-group-item"><strong>Metadata:</strong> {searchedParcel.metadata || 'N/A'}</li>
               <li className="list-group-item"><strong>Status:</strong> {searchedParcel.status}</li>
               <li className="list-group-item"><strong>Created At:</strong> {new Date(searchedParcel.createdAt).toLocaleString()}</li>
-              {searchedParcel.updatedAt && (
-                <li className="list-group-item"><strong>Updated At:</strong> {new Date(searchedParcel.updatedAt).toLocaleString()}</li>
-              )}
+              <li className="list-group-item"><strong>Expected Delivery At:</strong> {new Date(searchedParcel.expectedDeliveryAt).toLocaleString()}</li>
+              
             </ul>
           </div>
         )}

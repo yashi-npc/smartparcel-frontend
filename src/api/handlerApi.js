@@ -11,11 +11,16 @@ export const fetchAdminParcels = async () => {
 };
 
 export const updateParcelStatus = async (trackingId, status, metadata) => {
-  return axiosInstance.put(`/api/parcel/update/${trackingId}`, {
+  // If status is delivered, set deliveryAt to now (updatedAt will be set by backend)
+  const payload = {
     trackingId,
     status,
     metadata,
-  });
+  };
+  if (status && status.toLowerCase() === 'delivered') {
+    payload.deliveryAt = new Date().toISOString();
+  }
+  return axiosInstance.put(`/api/parcel/update/${trackingId}`, payload);
 };
 
 export const trackParcelById = async (trackingId) => {

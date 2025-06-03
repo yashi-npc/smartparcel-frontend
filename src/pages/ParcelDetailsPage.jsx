@@ -40,13 +40,16 @@ const ParcelDetailsPage = () => {
     <div className="container mt-5">
       <h2>Parcel Details</h2>
       <p><strong>Tracking ID:</strong> {parcel.trackingId}</p>
-      <p><strong>Tracking ID:</strong> {parcel.itemName}</p>
+      <p><strong>Item Name:</strong> {parcel.itemName}</p>
       <p><strong>Sender:</strong> {parcel.senderEmail}</p>
       <p><strong>Recipient:</strong> {parcel.recipientName}</p>
       <p><strong>Address:</strong> {parcel.recipientAddress}</p>
       <p><strong>Type:</strong> {parcel.type}</p>
       <p><strong>Weight:</strong> {parcel.weight}</p>
+      <p><strong>Price:</strong> {parcel.price}</p>
+      <li className="list-group-item"><strong>Expected Delivery At:</strong> {new Date(parcel.expectedDeliveryAt).toLocaleString()}</li>
       <p><strong>Status:</strong></p>
+              
       <select value={status} onChange={e => setStatus(e.target.value)} className="form-select w-50">
         <option value="Created">Created</option>
         <option value="In Transit">In Transit</option>

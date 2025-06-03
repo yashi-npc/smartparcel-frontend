@@ -45,10 +45,24 @@ function AdminDashboard() {
 
   // Calculate summary stats dynamically
   const today = new Date();
-  const todayStr = today.toISOString().slice(0, 10);
-  const monthStr = today.toISOString().slice(0, 7);
-  const todaysOrders = parcels.filter(p => p.createdAt && p.createdAt.slice(0, 10) === todayStr).length;
-  const thisMonthsOrders = parcels.filter(p => p.createdAt && p.createdAt.slice(0, 7) === monthStr).length;
+  
+   const isSameDay = (dateA, dateB) => {
+    if (!dateA || !dateB) return false;
+    const a = new Date(dateA);
+    const b = new Date(dateB);
+    return a.getFullYear() === b.getFullYear() &&
+      a.getMonth() === b.getMonth() &&
+      a.getDate() === b.getDate();
+  };
+  const isSameMonth = (dateA, dateB) => {
+    if (!dateA || !dateB) return false;
+    const a = new Date(dateA);
+    const b = new Date(dateB);
+    return a.getFullYear() === b.getFullYear() &&
+      a.getMonth() === b.getMonth();
+  };
+  const todaysOrders = parcels.filter(p => p.createdAt && isSameDay(p.createdAt, today)).length;
+  const thisMonthsOrders = parcels.filter(p => p.createdAt && isSameMonth(p.createdAt, today)).length;
   const successfulOrders = parcels.filter(p => (p.status || '').toLowerCase() === 'delivered').length;
   const failedOrders = parcels.filter(p => {
     const s = (p.status || '').toLowerCase();
@@ -393,7 +407,7 @@ function AdminDashboard() {
                         <div className="col-md-4">
                           <div className="mb-2"><strong>Item Information</strong></div>
                           <div>Item Name: <b>{parcel.itemName || 'N/A'}</b></div>
-                          <div>Item Category: <b>{parcel.type}</b></div>
+                          <div>Item Price: <b>{parcel.price ? `₹${parcel.price}` : 'N/A'}</b></div>
                           <div>Delivery Code: <b>{parcel.trackingId}</b></div>
                           <div>Metadata: <b>{parcel.metadata}</b></div>
                         </div>
@@ -402,7 +416,7 @@ function AdminDashboard() {
                           <div>Location: <b>{parcel.recipientAddress}</b></div>
                           <div>Condition: <span className="text-primary">Good Condition</span></div>
                           <div>Delivery Start: <b>{new Date(parcel.createdAt).toLocaleDateString()}</b></div>
-                          <div>Expected Ends: <b>{parcel.updatedAt ? new Date(parcel.updatedAt).toLocaleDateString() : 'N/A'}</b></div>
+                          <div>Expected Delivery: <b>{parcel.expectedDeliveryAt ? new Date(parcel.expectedDeliveryAt).toLocaleDateString() : 'N/A'}</b></div>
                         </div>
                       </div>
                       <div className="delivery-report-map mt-3">

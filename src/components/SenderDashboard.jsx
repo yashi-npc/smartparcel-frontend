@@ -12,6 +12,8 @@ function SenderDashboard() {
     recipientName: '',
     recipientAddress: '',
     weight: '',
+    price: '',
+    expectedDeliveryAt: '',
     type: '',
     metadata: '',
   });
@@ -26,8 +28,23 @@ function SenderDashboard() {
   const today = new Date();
   const todayStr = today.toISOString().slice(0, 10);
   const monthStr = today.toISOString().slice(0, 7);
-  const todaysOrders = parcels.filter(p => p.createdAt && p.createdAt.slice(0, 10) === todayStr).length;
-  const thisMonthsOrders = parcels.filter(p => p.createdAt && p.createdAt.slice(0, 7) === monthStr).length;
+  const isSameDay = (dateA, dateB) => {
+    if (!dateA || !dateB) return false;
+    const a = new Date(dateA);
+    const b = new Date(dateB);
+    return a.getFullYear() === b.getFullYear() &&
+      a.getMonth() === b.getMonth() &&
+      a.getDate() === b.getDate();
+  };
+  const isSameMonth = (dateA, dateB) => {
+    if (!dateA || !dateB) return false;
+    const a = new Date(dateA);
+    const b = new Date(dateB);
+    return a.getFullYear() === b.getFullYear() &&
+      a.getMonth() === b.getMonth();
+  };
+  const todaysOrders = parcels.filter(p => p.createdAt && isSameDay(p.createdAt, today)).length;
+  const thisMonthsOrders = parcels.filter(p => p.createdAt && isSameMonth(p.createdAt, today)).length;
   const successfulOrders = parcels.filter(p => (p.status || '').toLowerCase() === 'delivered').length;
   const failedOrders = parcels.filter(p => {
     const s = (p.status || '').toLowerCase();
@@ -81,18 +98,22 @@ function SenderDashboard() {
     setMessage('');
     setTrackingId('');
     setQrCodeImage('');
+    
     const payload = {
       itemName: formData.itemName.trim(),
       recipientName: formData.recipientName.trim(),
       recipientAddress: formData.recipientAddress.trim(),
       type: formData.type.trim(),
       weight: parseFloat(formData.weight),
+      price: parseFloat(formData.price),
+      expectedDeliveryAt: formData.expectedDeliveryAt.trim(),
       metadata: formData.metadata.trim() || '',
     };
-    if (isNaN(payload.weight) || payload.weight <= 0) {
-      setMessage('Please enter a valid positive weight.');
+    if (!payload.itemName || !payload.recipientName || !payload.recipientAddress || !payload.expectedDeliveryAt || !payload.type || isNaN(payload.price) || payload.price <= 0) {
+      setMessage('Please fill out all required fields correctly.');
       return;
     }
+
     try {
       const response = await axiosInstance.post('/api/parcel/create', payload);
       const { trackingId, qrCode } = response.data;
@@ -105,8 +126,10 @@ function SenderDashboard() {
         recipientName: '',
         recipientAddress: '',
         weight: '',
+        price: '',
         type: '',
         metadata: '',
+        expectedDeliveryAt: '',
       });
     } catch (err) {
       const errorMsg = err.response?.data?.message || 'Error creating parcel.';
@@ -216,7 +239,7 @@ function SenderDashboard() {
                         <div className="col-md-4">
                           <div className="mb-2"><strong>Item Information</strong></div>
                           <div>Item Name: <b>{parcel.itemName || 'N/A'}</b></div>
-                          <div>Item Category: <b>{parcel.type}</b></div>
+                          <div>Item Price: <b>{parcel.price ? `₹${parcel.price}` : 'N/A'}</b></div>
                           <div>Delivery Code: <b>{parcel.trackingId}</b></div>
                           <div>Metadata: <b>{parcel.metadata}</b></div>
                         </div>
@@ -225,7 +248,7 @@ function SenderDashboard() {
                           <div>Location: <b>{parcel.recipientAddress}</b></div>
                           <div>Condition: <span className="text-primary">Good Condition</span></div>
                           <div>Delivery Start: <b>{new Date(parcel.createdAt).toLocaleDateString()}</b></div>
-                          <div>Expected Ends: <b>{parcel.updatedAt ? new Date(parcel.updatedAt).toLocaleDateString() : 'N/A'}</b></div>
+                          <div>Expected Delivery: <b>{parcel.expectedDeliveryAt ? new Date(parcel.expectedDeliveryAt).toLocaleDateString() : 'N/A'}</b></div>
                         </div>
                       </div>
                     </div>
@@ -302,6 +325,31 @@ function SenderDashboard() {
                     />
                   </div>
                   <div className="col-md-4 mb-3">
+                    <label className="form-label">Price: (Rs)</label>
+                    <input
+                      type="number"
+                      className="form-control"
+                      name="price"
+                      value={formData.price}
+                      onChange={handleChange}
+                      min="0.1"
+                      step="0.1"
+                      required
+                    />
+                  </div>
+                  <div className="col-md-4 mb-3">
+                    <label className="form-label">Expected Delivery</label>
+                    <input
+                      type="date"
+                      className="form-control"
+                      name="expectedDeliveryAt"
+                      value={formData.expectedDeliveryAt}
+                      onChange={handleChange}
+                      min={todayStr}
+                      required
+                    />
+                  </div>
+                  <div className="col-md-4 mb-3">
                     <label className="form-label">Metadata (optional):</label>
                     <input
                       type="text"
@@ -347,12 +395,13 @@ function SenderDashboard() {
                         <th>Status</th>
                         <th>Created</th>
                         <th>Amount</th>
+                        <th>Expected Delivery</th>
                         <th>Invoice</th>
                       </tr>
                     </thead>
                     <tbody>
                       {parcels.length === 0 ? (
-                        <tr><td colSpan="8" className="text-center">No parcels found.</td></tr>
+                        <tr><td colSpan="9" className="text-center">No parcels found.</td></tr>
                       ) : (
                         parcels.map(parcel => (
                           <tr key={parcel.trackingId}>
@@ -362,7 +411,8 @@ function SenderDashboard() {
                             <td>{parcel.recipientAddress}</td>
                             <td>{parcel.status}</td>
                             <td>{parcel.createdAt ? new Date(parcel.createdAt).toLocaleDateString() : 'N/A'}</td>
-                            <td>{parcel.amount ? `₹${parcel.amount}` : 'N/A'}</td>
+                            <td>{parcel.price ? `₹${parcel.price}` : 'N/A'}</td>
+                            <td>{parcel.expectedDeliveryAt ? new Date(parcel.expectedDeliveryAt).toLocaleDateString() : 'N/A'}</td>
                             <td>
                               <button className="btn btn-sm btn-primary" disabled>Download Invoice</button>
                             </td>

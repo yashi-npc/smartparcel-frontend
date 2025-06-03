@@ -137,8 +137,14 @@ const RegisterPage = () => {
                 <div className="text-center mt-4">
                   <p className="mb-0">
                     Already have an account? {' '}
-                    <Link to="/" style={{ color: '#2d5be3', textDecoration: 'none', fontWeight: '600' }}>
+                    <Link to="/login" style={{ color: '#2d5be3', textDecoration: 'none', fontWeight: '600' }}>
                       Sign in here
+                    </Link>
+                  </p>
+                  <p className="mb-0">
+                    {' '}
+                    <Link to="/" style={{ color: '#2d5be3', textDecoration: 'none', fontWeight: '600' }}>
+                      Back to homepage
                     </Link>
                   </p>
                 </div>
