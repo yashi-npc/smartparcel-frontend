@@ -1,7 +1,6 @@
-// src/api/auth.js
 import axios from 'axios';
 
-const API_BASE_URL = 'http://localhost:8080/parceltrack'; // Adjust if your port or app name differs
+const API_BASE_URL = 'http://localhost:8080/parceltrack'; 
 
 export const login = async (email, password) => {
   try {

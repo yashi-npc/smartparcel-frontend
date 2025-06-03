@@ -8,6 +8,19 @@ import TrackParcelPage from '../pages/TrackParcelPage';
 import { MapContainer, TileLayer, Marker, Popup } from 'react-leaflet';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
+import { Pie, Bar } from 'react-chartjs-2';
+import { Chart, ArcElement, Tooltip, Legend, CategoryScale, LinearScale, BarElement } from 'chart.js';
+
+// Fix for default marker icon issue
+delete L.Icon.Default.prototype._getIconUrl;
+
+L.Icon.Default.mergeOptions({
+  iconRetinaUrl: require('leaflet/dist/images/marker-icon-2x.png'),
+  iconUrl: require('leaflet/dist/images/marker-icon.png'),
+  shadowUrl: require('leaflet/dist/images/marker-shadow.png'),
+});
+
+Chart.register(ArcElement, Tooltip, Legend, CategoryScale, LinearScale, BarElement);
 
 function AdminDashboard() {
   const [showEditForm, setShowEditForm] = useState(false);
@@ -30,21 +43,27 @@ function AdminDashboard() {
     setShowEditForm(true);
   };
 
-  const summary = {
-    today: 127,
-    monthly: 3289,
-    issues: 10,
-    total: 12853,
-  };
+  // Calculate summary stats dynamically
+  const today = new Date();
+  const todayStr = today.toISOString().slice(0, 10);
+  const monthStr = today.toISOString().slice(0, 7);
+  const todaysOrders = parcels.filter(p => p.createdAt && p.createdAt.slice(0, 10) === todayStr).length;
+  const thisMonthsOrders = parcels.filter(p => p.createdAt && p.createdAt.slice(0, 7) === monthStr).length;
+  const successfulOrders = parcels.filter(p => (p.status || '').toLowerCase() === 'delivered').length;
+  const failedOrders = parcels.filter(p => {
+    const s = (p.status || '').toLowerCase();
+    return s === 'canceled' || s === 'returned';
+  }).length;
+  const underwayOrders = parcels.filter(p => {
+    const s = (p.status || '').toLowerCase();
+    return s === 'shipped' || s === 'in transit' || s === 'out for delivery' || s === 'at local facility';
+  }).length;
+  const onHoldOrders = parcels.filter(p => (p.status || '').toLowerCase() === 'on hold').length;
 
   const filteredParcels = parcels.filter(parcel => {
     // Tab filter
     let tabMatch = true;
-    if (activeTab === 'progress') tabMatch = parcel.status === 'In Transit';
-    else if (activeTab === 'success') tabMatch = parcel.status === 'Delivered';
-    else if (activeTab === 'hold') tabMatch = parcel.status === 'On Hold';
-    else if (activeTab === 'canceled') tabMatch = parcel.status === 'Canceled';
-    else if (activeTab === 'refund') tabMatch = parcel.status === 'Refunded' || parcel.status === 'Reported';
+    if (activeTab !== 'all') tabMatch = (parcel.status || '').toLowerCase() === activeTab.toLowerCase();
     // Search filter (tracking ID, case-insensitive, partial)
     let searchMatch = true;
     if (dashboardSearch.trim() !== "") {
@@ -105,38 +124,40 @@ function AdminDashboard() {
     setActivePage(page);
   };
 
-  // Helper: Geocode address to lat/lng using Nominatim (OpenStreetMap)
   const geocodeAddress = async (address) => {
     if (!address || typeof address !== 'string' || !address.trim()) {
       throw new Error('No address');
     }
+
+    const apiKey = '9a03eb7c0a354cc1812750829b11c377'; // 🔑 Replace with your actual API key
     let query = address.trim();
-    let url = `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(query)}`;
-    let resp = await fetch(url);
-    let data = await resp.json();
-    if (data && data.length > 0) {
-      return {
-        lat: parseFloat(data[0].lat),
-        lng: parseFloat(data[0].lon)
-      };
-    }
-    // Try again with ', India' appended if not already present
+
+    const fetchCoords = async (query) => {
+      const url = `https://api.opencagedata.com/geocode/v1/json?q=${encodeURIComponent(query)}&key=${apiKey}`;
+      const resp = await fetch(url);
+      const data = await resp.json();
+      if (data && data.results && data.results.length > 0) {
+        const { lat, lng } = data.results[0].geometry;
+        return { lat, lng };
+      }
+      return null;
+    };
+
+    // Try first with the given address
+    let coords = await fetchCoords(query);
+    if (coords) return coords;
+
+    // Retry with ", India" if not already present
     if (!/india/i.test(query)) {
       query = query + ', India';
-      url = `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(query)}`;
-      resp = await fetch(url);
-      data = await resp.json();
-      if (data && data.length > 0) {
-        return {
-          lat: parseFloat(data[0].lat),
-          lng: parseFloat(data[0].lon)
-        };
-      }
+      coords = await fetchCoords(query);
+      if (coords) return coords;
     }
-    // Log for debugging
+
     console.warn('Geocoding failed for address:', address);
     throw new Error('Location not found');
-  };
+};
+
 
   // Add useEffect to geocode addresses for visible parcels
   useEffect(() => {
@@ -157,6 +178,81 @@ function AdminDashboard() {
     // eslint-disable-next-line
   }, [filteredParcels]);
 
+  // Delivery Data chart helpers
+  // Normalize statuses and use a display mapping to avoid duplicate labels
+  const statusDisplayMap = {
+    'pending': 'Pending',
+    'ready for shipment': 'Ready for Shipment',
+    'shipped': 'Shipped',
+    'in transit': 'In Transit',
+    'out for delivery': 'Out for Delivery',
+    'on hold': 'On Hold',
+    'at local facility': 'At Local Facility',
+    'delivered': 'Delivered',
+    'canceled': 'Cancelled',
+    'cancelled': 'Cancelled', // British spelling
+    'returned': 'Returned',
+    'unknown': 'Unknown',
+  };
+  const statusCounts = parcels.reduce((acc, p) => {
+    let status = (p.status || 'Unknown').toLowerCase().trim();
+    // Normalize spelling for canceled/cancelled
+    if (status === 'cancelled') status = 'canceled';
+    acc[status] = (acc[status] || 0) + 1;
+    return acc;
+  }, {});
+  const statusLabels = Object.keys(statusCounts).map(s => statusDisplayMap[s] || (s.charAt(0).toUpperCase() + s.slice(1)));
+  const statusData = Object.values(statusCounts);
+
+  // Bar chart: Deliveries per day (last 7 days)
+  const days = [...Array(7)].map((_, i) => {
+    const d = new Date();
+    d.setDate(d.getDate() - (6 - i));
+    return d.toISOString().slice(0, 10);
+  });
+  const deliveriesPerDay = days.map(day => parcels.filter(p => p.createdAt && p.createdAt.slice(0, 10) === day).length);
+
+  const pieData = {
+    labels: statusLabels,
+    datasets: [
+      {
+        data: statusData,
+        backgroundColor: [
+          '#2d5be3', '#4bc0c0', '#ff6384', '#ffcd56', '#36a2eb', '#9966ff', '#ff9f40', '#c9cbcf', '#e57373', '#81c784', '#ffd54f', '#90caf9'
+        ],
+        borderWidth: 1,
+      },
+    ],
+  };
+  const barData = {
+    labels: days.map(d => d.slice(5)),
+    datasets: [
+      {
+        label: 'Parcels Created',
+        data: deliveriesPerDay,
+        backgroundColor: '#2d5be3',
+        borderRadius: 6,
+      },
+    ],
+  };
+  const pieOptions = {
+    plugins: {
+      legend: { position: 'bottom', labels: { font: { size: 14 } } },
+    },
+    responsive: true,
+    maintainAspectRatio: false,
+  };
+  const barOptions = {
+    plugins: {
+      legend: { display: false },
+    },
+    responsive: true,
+    maintainAspectRatio: false,
+    scales: {
+      y: { beginAtZero: true, ticks: { stepSize: 1 } },
+    },
+  };
+
   return (
     <div className="admin-dashboard-layout">
       {/* Sidebar */}
@@ -168,11 +264,8 @@ function AdminDashboard() {
           <ul>
             <li className={activePage === 'dashboard' ? 'active' : ''} onClick={() => handleSidebarNav('dashboard')}>Delivery Dashboard</li>
             <li className={activePage === 'track' ? 'active' : ''} onClick={() => handleSidebarNav('track')}>Track Parcel</li>
-            <li>Customer Report</li>
-            <li>Courier Payroll</li>
-            <li>Delivery Data</li>
-            <li>Delivery Invoices</li>
-            <li>App Integration</li>
+            <li className={activePage === 'deliverydata' ? 'active' : ''} onClick={() => handleSidebarNav('deliverydata')}>Delivery Data</li>
+            <li className={activePage === 'invoices' ? 'active' : ''} onClick={() => handleSidebarNav('invoices')}>Delivery Invoices</li>
           </ul>
         </nav>
         <div className="sidebar-footer">
@@ -186,12 +279,7 @@ function AdminDashboard() {
       <main className="admin-main">
         {/* Header */}
         <div className="admin-header">
-          <input
-            className="admin-search"
-            placeholder="Search by Tracking ID"
-            value={dashboardSearch}
-            onChange={e => setDashboardSearch(e.target.value)}
-          />
+          
           <div className="admin-header-actions">
             <button className="admin-header-btn">Delivery Logs</button>
             <button className="admin-header-btn">Download Delivery Report</button>
@@ -202,60 +290,87 @@ function AdminDashboard() {
         <div className="admin-content">
           {activePage === 'dashboard' && (
             <>
+              <input
+                className="admin-search"
+                placeholder="Search by Tracking ID"
+                value={dashboardSearch}
+                onChange={e => setDashboardSearch(e.target.value)}
+              />
+              {/* Only show summary cards if search bar is empty */}
+              {dashboardSearch.trim() === '' && (
+                <div className="summary-cards-row">
+                  <div className="summary-card">
+                    <div className="summary-card-title">Today's Orders</div>
+                    <div className="summary-card-value">{todaysOrders}</div>
+                    <div className="summary-card-label-success">Total parcels created today</div>
+                  </div>
+                  <div className="summary-card">
+                    <div className="summary-card-title">This Month's Orders</div>
+                    <div className="summary-card-value">{thisMonthsOrders}</div>
+                    <div className="summary-card-label-success">Total parcels created this month</div>
+                  </div>
+                  <div className="summary-card">
+                    <div className="summary-card-title">Successful Orders</div>
+                    <div className="summary-card-value">{successfulOrders}</div>
+                    <div className="summary-card-label-success">Delivered</div>
+                  </div>
+                  <div className="summary-card">
+                    <div className="summary-card-title">Failed Orders</div>
+                    <div className="summary-card-value">{failedOrders}</div>
+                    <div className="summary-card-label-fail">Canceled + Returned</div>
+                  </div>
+                  <div className="summary-card">
+                    <div className="summary-card-title">Underway Orders</div>
+                    <div className="summary-card-value">{underwayOrders}</div>
+                    <div className="summary-card-label-underway">Shipped, In transit, Out for delivery, At local facility</div>
+                  </div>
+                  <div className="summary-card">
+                    <div className="summary-card-title">On Hold</div>
+                    <div className="summary-card-value">{onHoldOrders}</div>
+                    <div className="summary-card-label-fail">On hold parcels</div>
+                  </div>
+                </div>
+              )}
               <div className="admin-breadcrumb mb-2">Home &gt; Delivery Orders &gt; Current Delivery</div>
               <h2 className="mb-4">Delivery Orders</h2>
-              {/* Summary Cards */}
-              <div className="row mb-4">
-                <div className="col-md-3">
-                  <div className="card text-center p-3">
-                    <div>Today's Delivery</div>
-                    <h4>{summary.today} Orders</h4>
-                    <div className="text-success small">+150% vs past month</div>
-                  </div>
-                </div>
-                <div className="col-md-3">
-                  <div className="card text-center p-3">
-                    <div>Monthly Delivery</div>
-                    <h4>{summary.monthly} Orders</h4>
-                    <div className="text-success small">+150% vs past month</div>
-                  </div>
-                </div>
-                <div className="col-md-3">
-                  <div className="card text-center p-3">
-                    <div>Delivery Issue</div>
-                    <h4>{summary.issues} Report</h4>
-                    <div className="text-success small">+150% vs past month</div>
-                  </div>
-                </div>
-                <div className="col-md-3">
-                  <div className="card text-center p-3">
-                    <div>Total Delivery</div>
-                    <h4>{summary.total} Orders</h4>
-                    <div className="text-success small">+150% vs past month</div>
-                  </div>
-                </div>
-              </div>
               {/* Delivery Report Tabs */}
-              <ul className="nav nav-tabs mb-3">
-                <li className="nav-item">
-                  <button className={`nav-link${activeTab === 'all' ? ' active' : ''}`} onClick={() => setActiveTab('all')}>All Delivery</button>
-                </li>
-                <li className="nav-item">
-                  <button className={`nav-link${activeTab === 'progress' ? ' active' : ''}`} onClick={() => setActiveTab('progress')}>On Progress Delivery</button>
-                </li>
-                <li className="nav-item">
-                  <button className={`nav-link${activeTab === 'success' ? ' active' : ''}`} onClick={() => setActiveTab('success')}>Successful</button>
-                </li>
-                <li className="nav-item">
-                  <button className={`nav-link${activeTab === 'hold' ? ' active' : ''}`} onClick={() => setActiveTab('hold')}>On Hold Delivery</button>
-                </li>
-                <li className="nav-item">
-                  <button className={`nav-link${activeTab === 'canceled' ? ' active' : ''}`} onClick={() => setActiveTab('canceled')}>Canceled Delivery</button>
-                </li>
-                <li className="nav-item">
-                  <button className={`nav-link${activeTab === 'refund' ? ' active' : ''}`} onClick={() => setActiveTab('refund')}>Refund / Reported</button>
-                </li>
-              </ul>
+              <div style={{ overflowX: 'auto', whiteSpace: 'nowrap', marginBottom: '1rem' }}>
+                <ul className="nav nav-tabs mb-3 flex-nowrap" style={{ minWidth: '700px', width: 'max-content', display: 'inline-flex' }}>
+                  <li className="nav-item">
+                    <button className={`nav-link${activeTab === 'all' ? ' active' : ''}`} onClick={() => setActiveTab('all')}>All</button>
+                  </li>
+                  <li className="nav-item">
+                    <button className={`nav-link${activeTab === 'Pending' ? ' active' : ''}`} onClick={() => setActiveTab('Pending')}>Processing</button>
+                  </li>
+                  <li className="nav-item">
+                    <button className={`nav-link${activeTab === 'Ready for shipment' ? ' active' : ''}`} onClick={() => setActiveTab('Ready for shipment')}>Ready for shipment</button>
+                  </li>
+                  <li className="nav-item">
+                    <button className={`nav-link${activeTab === 'Shipped' ? ' active' : ''}`} onClick={() => setActiveTab('Shipped')}>Shipped</button>
+                  </li>
+                  <li className="nav-item">
+                    <button className={`nav-link${activeTab === 'In transit' ? ' active' : ''}`} onClick={() => setActiveTab('In transit')}>In transit</button>
+                  </li>
+                  <li className="nav-item">
+                    <button className={`nav-link${activeTab === 'Out for delivery' ? ' active' : ''}`} onClick={() => setActiveTab('Out for delivery')}>Out for delivery</button>
+                  </li>
+                  <li className="nav-item">
+                    <button className={`nav-link${activeTab === 'On hold' ? ' active' : ''}`} onClick={() => setActiveTab('On hold')}>On hold</button>
+                  </li>
+                  <li className="nav-item">
+                    <button className={`nav-link${activeTab === 'At local facility' ? ' active' : ''}`} onClick={() => setActiveTab('At local facility')}>At local facility</button>
+                  </li>
+                  <li className="nav-item">
+                    <button className={`nav-link${activeTab === 'Delivered' ? ' active' : ''}`} onClick={() => setActiveTab('Delivered')}>Delivered</button>
+                  </li>
+                  <li className="nav-item">
+                    <button className={`nav-link${activeTab === 'Canceled' ? ' active' : ''}`} onClick={() => setActiveTab('Canceled')}>Canceled</button>
+                  </li>
+                  <li className="nav-item">
+                    <button className={`nav-link${activeTab === 'Returned' ? ' active' : ''}`} onClick={() => setActiveTab('Returned')}>Returned</button>
+                  </li>
+                </ul>
+              </div>
               {/* Delivery Report Cards */}
               <div className="delivery-report-list">
                 {filteredParcels.length > 0 ? (
@@ -277,9 +392,10 @@ function AdminDashboard() {
                         </div>
                         <div className="col-md-4">
                           <div className="mb-2"><strong>Item Information</strong></div>
-                          <div>Item Name: <b>{parcel.metadata || 'N/A'}</b></div>
+                          <div>Item Name: <b>{parcel.itemName || 'N/A'}</b></div>
                           <div>Item Category: <b>{parcel.type}</b></div>
                           <div>Delivery Code: <b>{parcel.trackingId}</b></div>
+                          <div>Metadata: <b>{parcel.metadata}</b></div>
                         </div>
                         <div className="col-md-4">
                           <div className="mb-2"><strong>Delivery Information</strong></div>
@@ -290,12 +406,9 @@ function AdminDashboard() {
                         </div>
                       </div>
                       <div className="delivery-report-map mt-3">
-                        {mapLoading[parcel.trackingId] ? (
-                          <div className="map-placeholder">Loading map...</div>
-                        ) : mapError[parcel.trackingId] ? (
-                          <div className="map-placeholder text-danger">Map unavailable</div>
-                        ) : mapLocations[parcel.trackingId] ? (
+                        {mapLocations[parcel.trackingId] ? (
                           <MapContainer
+                            key={parcel.trackingId + '-' + mapLocations[parcel.trackingId].lat + '-' + mapLocations[parcel.trackingId].lng}
                             center={[mapLocations[parcel.trackingId].lat, mapLocations[parcel.trackingId].lng]}
                             zoom={13}
                             style={{ height: '120px', width: '100%', borderRadius: '8px' }}
@@ -310,6 +423,10 @@ function AdminDashboard() {
                               <Popup>{parcel.recipientAddress}</Popup>
                             </Marker>
                           </MapContainer>
+                        ) : mapLoading[parcel.trackingId] ? (
+                          <div className="map-placeholder">Loading map...</div>
+                        ) : mapError[parcel.trackingId] ? (
+                          <div className="map-placeholder text-danger">Map unavailable</div>
                         ) : (
                           <div className="map-placeholder">Map view here</div>
                         )}
@@ -333,6 +450,7 @@ function AdminDashboard() {
                     </div>
                     <div className="card-body" style={{ padding: '1.5rem', fontFamily: 'inherit', color: '#222' }}>
                       <ul className="list-group mb-3" style={{ border: 'none', fontSize: '1.05rem' }}>
+                        <li className="list-group-item" style={{ border: 'none', padding: '0.5rem 0' }}><span style={{ fontWeight: 600, color: '#2d5be3' }}>Item Name:</span> {selectedParcel.itemName}</li>
                         <li className="list-group-item" style={{ border: 'none', padding: '0.5rem 0' }}><span style={{ fontWeight: 600, color: '#2d5be3' }}>Recipient:</span> {selectedParcel.recipientName}</li>
                         <li className="list-group-item" style={{ border: 'none', padding: '0.5rem 0' }}><span style={{ fontWeight: 600, color: '#2d5be3' }}>Address:</span> {selectedParcel.recipientAddress}</li>
                         <li className="list-group-item" style={{ border: 'none', padding: '0.5rem 0' }}><span style={{ fontWeight: 600, color: '#2d5be3' }}>Weight:</span> {selectedParcel.weight} kg</li>
@@ -360,6 +478,72 @@ function AdminDashboard() {
             </>
           )}
           {activePage === 'track' && <TrackParcelPage />}
+          {activePage === 'deliverydata' && (
+            <div className="delivery-data-tab">
+              <h2 className="mb-4">Delivery Data</h2>
+              <div className="row">
+                <div className="col-md-6 mb-4">
+                  <div className="card" style={{ height: '340px', padding: '1.5rem', borderRadius: '16px', boxShadow: '0 4px 16px rgba(45,91,227,0.07)' }}>
+                    <h5 className="mb-3">Parcel Status Distribution</h5>
+                    <div style={{ height: '250px' }}>
+                      <Pie data={pieData} options={pieOptions} />
+                    </div>
+                  </div>
+                </div>
+                <div className="col-md-6 mb-4">
+                  <div className="card" style={{ height: '340px', padding: '1.5rem', borderRadius: '16px', boxShadow: '0 4px 16px rgba(45,91,227,0.07)' }}>
+                    <h5 className="mb-3">Parcels Created (Last 7 Days)</h5>
+                    <div style={{ height: '250px' }}>
+                      <Bar data={barData} options={barOptions} />
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+          {activePage === 'invoices' && (
+            <div className="delivery-invoices-tab">
+              <h2 className="mb-4">Delivery Invoices</h2>
+              <div className="card" style={{ padding: '1.5rem', borderRadius: '16px', boxShadow: '0 4px 16px rgba(45,91,227,0.07)' }}>
+                <div style={{ overflowX: 'auto' }}>
+                  <table className="table table-striped" style={{ minWidth: 900 }}>
+                    <thead>
+                      <tr>
+                        <th>Tracking ID</th>
+                        <th>Item Name</th>
+                        <th>Recipient</th>
+                        <th>Address</th>
+                        <th>Status</th>
+                        <th>Created</th>
+                        <th>Amount</th>
+                        <th>Invoice</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {parcels.length === 0 ? (
+                        <tr><td colSpan="8" className="text-center">No parcels found.</td></tr>
+                      ) : (
+                        parcels.map(parcel => (
+                          <tr key={parcel.trackingId}>
+                            <td>{parcel.trackingId}</td>
+                            <td>{parcel.itemName || 'N/A'}</td>
+                            <td>{parcel.recipientName}</td>
+                            <td>{parcel.recipientAddress}</td>
+                            <td>{parcel.status}</td>
+                            <td>{parcel.createdAt ? new Date(parcel.createdAt).toLocaleDateString() : 'N/A'}</td>
+                            <td>{parcel.amount ? `₹${parcel.amount}` : 'N/A'}</td>
+                            <td>
+                              <button className="btn btn-sm btn-primary" disabled>Download Invoice</button>
+                            </td>
+                          </tr>
+                        ))
+                      )}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            </div>
+          )}
         </div>
       </main>
     </div>

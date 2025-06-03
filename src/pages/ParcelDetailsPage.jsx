@@ -1,7 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
 import axiosInstance from '../api/axiosInstance';
-import { QRCodeCanvas } from 'qrcode.react';
 
 const ParcelDetailsPage = () => {
   const { trackingId } = useParams();
@@ -41,6 +40,7 @@ const ParcelDetailsPage = () => {
     <div className="container mt-5">
       <h2>Parcel Details</h2>
       <p><strong>Tracking ID:</strong> {parcel.trackingId}</p>
+      <p><strong>Tracking ID:</strong> {parcel.itemName}</p>
       <p><strong>Sender:</strong> {parcel.senderEmail}</p>
       <p><strong>Recipient:</strong> {parcel.recipientName}</p>
       <p><strong>Address:</strong> {parcel.recipientAddress}</p>

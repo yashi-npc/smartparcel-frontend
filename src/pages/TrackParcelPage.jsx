@@ -44,6 +44,7 @@ function TrackParcelPage() {
           <div className="alert alert-success">
             <h5>Parcel Found:</h5>
             <ul className="list-group">
+              <li className="list-group-item"><strong>Item Name:</strong> {searchedParcel.itemName}</li>
               <li className="list-group-item"><strong>Recipient:</strong> {searchedParcel.recipientName}</li>
               <li className="list-group-item"><strong>Address:</strong> {searchedParcel.recipientAddress}</li>
               <li className="list-group-item"><strong>Weight:</strong> {searchedParcel.weight} kg</li>

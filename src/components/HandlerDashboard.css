@@ -1,4 +1,8 @@
 /* HandlerDashboard.css - Modern, beautiful, and consistent with AdminDashboard */
+body{
+  color: #222; /* or #333 or #000 */
+  background-color: #f5f7fa;
+}
 .admin-dashboard-layout {
   display: flex;
   min-height: 100vh;
@@ -332,6 +336,27 @@
   gap: 0.5rem;
   flex-wrap: wrap;
 }
+
+/* Pretty light grey scrollbar for horizontally scrollable nav-tabs */
+.nav-tabs::-webkit-scrollbar {
+  height: 8px;
+  background: #f3f3f3!important;
+  border-radius: 6px;
+}
+.nav-tabs::-webkit-scrollbar-thumb {
+  background: #e0e0e0;
+  border-radius: 6px;
+}
+.nav-tabs::-webkit-scrollbar-thumb:hover {
+  background: #cccccc;
+}
+
+/* For Firefox */
+.nav-tabs {
+  scrollbar-color: #e0e0e0 #f3f3f3;
+  scrollbar-width: thin;
+}
+
 .nav-item {
   margin-bottom: -1px;
 }

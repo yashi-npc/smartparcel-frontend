@@ -5,10 +5,23 @@ import { fetchParcels, updateParcelStatus, trackParcelById } from '../api/handle
 import { logout } from '../api/auth';
 import './HandlerDashboard.css';
 import TrackParcelPage from '../pages/TrackParcelPage';
+import L from 'leaflet';
 import { MapContainer, TileLayer, Marker, Popup } from 'react-leaflet';
 import 'leaflet/dist/leaflet.css';
 
+import markerIcon2x from 'leaflet/dist/images/marker-icon-2x.png';
+import markerIcon from 'leaflet/dist/images/marker-icon.png';
+import markerShadow from 'leaflet/dist/images/marker-shadow.png';
+
+delete L.Icon.Default.prototype._getIconUrl;
+  L.Icon.Default.mergeOptions({
+    iconRetinaUrl: markerIcon2x,
+    iconUrl: markerIcon,
+    shadowUrl: markerShadow,
+});
+
 function HandlerDashboard() {
+ 
   const [showEditForm, setShowEditForm] = useState(false);
   const [selectedParcel, setSelectedParcel] = useState(null);
   const [newStatus, setNewStatus] = useState('');
@@ -21,21 +34,30 @@ function HandlerDashboard() {
   const navigate = useNavigate();
   const [activePage, setActivePage] = useState('dashboard');
   const [activeTab, setActiveTab] = useState('all');
-  const summary = {
-    today: 42,
-    monthly: 900,
-    issues: 2,
-    total: 3200,
-  };
+  const [searchUpdateId, setSearchUpdateId] = useState('');
+  const [searchedUpdateParcel, setSearchedUpdateParcel] = useState(null);
+  const [searchUpdateError, setSearchUpdateError] = useState('');
+  
+  const today = new Date();
+  const todayStr = today.toISOString().slice(0, 10);
+  const monthStr = today.toISOString().slice(0, 7);
+  const todaysOrders = parcels.filter(p => p.createdAt && p.createdAt.slice(0, 10) === todayStr).length;
+  const thisMonthsOrders = parcels.filter(p => p.createdAt && p.createdAt.slice(0, 7) === monthStr).length;
+  const successfulOrders = parcels.filter(p => (p.status || '').toLowerCase() === 'delivered').length;
+  const failedOrders = parcels.filter(p => {
+    const s = (p.status || '').toLowerCase();
+    return s === 'canceled' || s === 'returned';
+  }).length;
+  const underwayOrders = parcels.filter(p => {
+    const s = (p.status || '').toLowerCase();
+    return s === 'shipped' || s === 'in transit' || s === 'out for delivery' || s === 'at local facility';
+  }).length;
+  const onHoldOrders = parcels.filter(p => (p.status || '').toLowerCase() === 'on hold').length;
 
   const filteredParcels = parcels.filter(parcel => {
     // Tab filter
     let tabMatch = true;
-    if (activeTab === 'progress') tabMatch = parcel.status === 'In Transit';
-    else if (activeTab === 'success') tabMatch = parcel.status === 'Delivered';
-    else if (activeTab === 'hold') tabMatch = parcel.status === 'On Hold';
-    else if (activeTab === 'canceled') tabMatch = parcel.status === 'Canceled';
-    else if (activeTab === 'refund') tabMatch = parcel.status === 'Refunded' || parcel.status === 'Reported';
+    if (activeTab !== 'all') tabMatch = parcel.status === activeTab;
     
     // Search filter (tracking ID, case-insensitive, partial)
     let searchMatch = true;
@@ -67,26 +89,39 @@ function HandlerDashboard() {
   useEffect(() => { loadParcels(); }, []);
 
   // Geocode helper (same as admin)
-  const geocodeAddress = async (address) => {
-    if (!address || typeof address !== 'string' || !address.trim()) throw new Error('No address');
-    let query = address.trim();
-    let url = `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(query)}`;
-    let resp = await fetch(url);
-    let data = await resp.json();
-    if (data && data.length > 0) {
-      return { lat: parseFloat(data[0].lat), lng: parseFloat(data[0].lon) };
+    const geocodeAddress = async (address) => {
+    if (!address || typeof address !== 'string' || !address.trim()) {
+      throw new Error('No address');
     }
+
+    const apiKey = '9a03eb7c0a354cc1812750829b11c377'; // 🔑 Replace with your actual API key
+    let query = address.trim();
+
+    const fetchCoords = async (query) => {
+      const url = `https://api.opencagedata.com/geocode/v1/json?q=${encodeURIComponent(query)}&key=${apiKey}`;
+      const resp = await fetch(url);
+      const data = await resp.json();
+      if (data && data.results && data.results.length > 0) {
+        const { lat, lng } = data.results[0].geometry;
+        return { lat, lng };
+      }
+      return null;
+    };
+
+    // Try first with the given address
+    let coords = await fetchCoords(query);
+    if (coords) return coords;
+
+    // Retry with ", India" if not already present
     if (!/india/i.test(query)) {
       query = query + ', India';
-      url = `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(query)}`;
-      resp = await fetch(url);
-      data = await resp.json();
-      if (data && data.length > 0) {
-        return { lat: parseFloat(data[0].lat), lng: parseFloat(data[0].lon) };
-      }
+      coords = await fetchCoords(query);
+      if (coords) return coords;
     }
+
+    console.warn('Geocoding failed for address:', address);
     throw new Error('Location not found');
-  };
+};
 
   useEffect(() => {
     filteredParcels.forEach(parcel => {
@@ -130,6 +165,59 @@ function HandlerDashboard() {
     setActivePage(page);
   };
 
+  const handleUpdateSearch = async (e) => {
+    e.preventDefault();
+    setSearchUpdateError('');
+    setSearchedUpdateParcel(null);
+    if (!searchUpdateId.trim()) {
+      setSearchUpdateError('Please enter a tracking ID.');
+      return;
+    }
+    try {
+      const data = await trackParcelById(searchUpdateId.trim());
+      setSearchedUpdateParcel(data);
+      setNewStatus(data.status);
+      setMetadata(data.metadata || '');
+    } catch (err) {
+      const msg = err.response?.data?.message || 'Parcel not found.';
+      setSearchUpdateError(msg);
+    }
+  };
+
+  const handleUpdateInPage = async () => {
+    if (!newStatus.trim() || !searchedUpdateParcel) return;
+    try {
+      await updateParcelStatus(searchedUpdateParcel.trackingId, newStatus, metadata || searchedUpdateParcel.metadata);
+      const updatedData = await trackParcelById(searchedUpdateParcel.trackingId);
+      setSearchedUpdateParcel(updatedData);
+      alert('Parcel updated successfully!');
+    } catch (error) {
+      alert('Failed to update parcel.');
+    }
+  };
+
+  // SingleMap component for rendering a single map instance
+const SingleMap = ({ coords, address }) => {
+  const { lat, lng } = coords;
+  return (
+    <MapContainer
+      center={[lat, lng]}
+      zoom={13}
+      style={{ height: '120px', width: '100%', borderRadius: '8px' }}
+      scrollWheelZoom={false}
+      dragging={false}
+      doubleClickZoom={false}
+      zoomControl={false}
+      attributionControl={false}
+    >
+      <TileLayer url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" />
+      <Marker position={[lat, lng]}>
+        <Popup>{address}</Popup>
+      </Marker>
+    </MapContainer>
+  );
+};
+
   return (
     <div className="admin-dashboard-layout">
       {/* Sidebar */}
@@ -140,10 +228,9 @@ function HandlerDashboard() {
         <nav className="sidebar-nav">
           <ul>
             <li className={activePage === 'dashboard' ? 'active' : ''} onClick={() => handleSidebarNav('dashboard')}>Handler Dashboard</li>
+            <li className={activePage === 'updateparcel' ? 'active' : ''} onClick={() => handleSidebarNav('updateparcel')}>Update Parcel</li>
             <li className={activePage === 'track' ? 'active' : ''} onClick={() => handleSidebarNav('track')}>Track Parcel</li>
-            <li>Delivery Data</li>
-            <li>Delivery Invoices</li>
-            <li>App Integration</li>
+            
           </ul>
         </nav>
         <div className="sidebar-footer">
@@ -157,13 +244,7 @@ function HandlerDashboard() {
       <main className="admin-main">
         {/* Header */}
         <div className="admin-header" style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
-          <input
-            className="admin-search"
-            placeholder="Search by Tracking ID"
-            value={dashboardSearch}
-            onChange={e => setDashboardSearch(e.target.value)}
-            style={{ flex: 1, minWidth: 0 }}
-          />
+          
           <div className="admin-header-actions">
             <button className="admin-header-btn">Delivery Logs</button>
             <button className="admin-header-btn">Download Delivery Report</button>
@@ -174,60 +255,88 @@ function HandlerDashboard() {
         <div className="admin-content">
           {activePage === 'dashboard' && (
             <>
+              <input
+                className="admin-search"
+                placeholder="Search by Tracking ID"
+                value={dashboardSearch}
+                onChange={e => setDashboardSearch(e.target.value)}
+                style={{ flex: 1, minWidth: 0 }}
+              />
               <div className="admin-breadcrumb mb-2">Home &gt; Handler &gt; Parcels</div>
               <h2 className="mb-4">Handler Parcels</h2>
               {/* Summary Cards */}
-              <div className="row mb-4">
-                <div className="col-md-3">
-                  <div className="card text-center p-3">
-                    <div>Today's Delivery</div>
-                    <h4>{summary.today} Orders</h4>
-                    <div className="text-success small">+150% vs past month</div>
+              {dashboardSearch.trim() === '' && (
+                <div className="summary-cards-row">
+                  <div className="summary-card">
+                    <div className="summary-card-title">Today's Orders</div>
+                    <div className="summary-card-value">{todaysOrders}</div>
+                    <div className="summary-card-label-success">Total parcels created today</div>
+                  </div>
+                  <div className="summary-card">
+                    <div className="summary-card-title">This Month's Orders</div>
+                    <div className="summary-card-value">{thisMonthsOrders}</div>
+                    <div className="summary-card-label-success">Total parcels created this month</div>
+                  </div>
+                  <div className="summary-card">
+                    <div className="summary-card-title">Successful Orders</div>
+                    <div className="summary-card-value">{successfulOrders}</div>
+                    <div className="summary-card-label-success">Delivered</div>
+                  </div>
+                  <div className="summary-card">
+                    <div className="summary-card-title">Failed Orders</div>
+                    <div className="summary-card-value">{failedOrders}</div>
+                    <div className="summary-card-label-fail">Canceled + Returned</div>
+                  </div>
+                  <div className="summary-card">
+                    <div className="summary-card-title">Underway Orders</div>
+                    <div className="summary-card-value">{underwayOrders}</div>
+                    <div className="summary-card-label-underway">Shipped, In transit, Out for delivery, At local facility</div>
+                  </div>
+                  <div className="summary-card">
+                    <div className="summary-card-title">On Hold</div>
+                    <div className="summary-card-value">{onHoldOrders}</div>
+                    <div className="summary-card-label-fail">On hold parcels</div>
                   </div>
                 </div>
-                <div className="col-md-3">
-                  <div className="card text-center p-3">
-                    <div>Monthly Delivery</div>
-                    <h4>{summary.monthly} Orders</h4>
-                    <div className="text-success small">+150% vs past month</div>
-                  </div>
-                </div>
-                <div className="col-md-3">
-                  <div className="card text-center p-3">
-                    <div>Delivery Issue</div>
-                    <h4>{summary.issues} Report</h4>
-                    <div className="text-success small">+150% vs past month</div>
-                  </div>
-                </div>
-                <div className="col-md-3">
-                  <div className="card text-center p-3">
-                    <div>Total Delivery</div>
-                    <h4>{summary.total} Orders</h4>
-                    <div className="text-success small">+150% vs past month</div>
-                  </div>
-                </div>
-              </div>
+              )}
               {/* Delivery Report Tabs */}
-              <ul className="nav nav-tabs mb-3">
-                <li className="nav-item">
-                  <button className={`nav-link${activeTab === 'all' ? ' active' : ''}`} onClick={() => setActiveTab('all')}>All Delivery</button>
-                </li>
-                <li className="nav-item">
-                  <button className={`nav-link${activeTab === 'progress' ? ' active' : ''}`} onClick={() => setActiveTab('progress')}>On Progress Delivery</button>
-                </li>
-                <li className="nav-item">
-                  <button className={`nav-link${activeTab === 'success' ? ' active' : ''}`} onClick={() => setActiveTab('success')}>Successful</button>
-                </li>
-                <li className="nav-item">
-                  <button className={`nav-link${activeTab === 'hold' ? ' active' : ''}`} onClick={() => setActiveTab('hold')}>On Hold Delivery</button>
-                </li>
-                <li className="nav-item">
-                  <button className={`nav-link${activeTab === 'canceled' ? ' active' : ''}`} onClick={() => setActiveTab('canceled')}>Canceled Delivery</button>
-                </li>
-                <li className="nav-item">
-                  <button className={`nav-link${activeTab === 'refund' ? ' active' : ''}`} onClick={() => setActiveTab('refund')}>Refund / Reported</button>
-                </li>
-              </ul>
+              <div style={{ overflowX: 'auto', whiteSpace: 'nowrap', marginBottom: '1rem' }}>
+                <ul className="nav nav-tabs mb-3 flex-nowrap" style={{ minWidth: '700px', width: 'max-content', display: 'inline-flex' }}>
+                  <li className="nav-item">
+                    <button className={`nav-link${activeTab === 'all' ? ' active' : ''}`} onClick={() => setActiveTab('all')}>All</button>
+                  </li>
+                  <li className="nav-item">
+                    <button className={`nav-link${activeTab === 'Pending' ? ' active' : ''}`} onClick={() => setActiveTab('Pending')}>Processing</button>
+                  </li>
+                  <li className="nav-item">
+                    <button className={`nav-link${activeTab === 'Ready for shipment' ? ' active' : ''}`} onClick={() => setActiveTab('Ready for shipment')}>Ready for shipment</button>
+                  </li>
+                  <li className="nav-item">
+                    <button className={`nav-link${activeTab === 'Shipped' ? ' active' : ''}`} onClick={() => setActiveTab('Shipped')}>Shipped</button>
+                  </li>
+                  <li className="nav-item">
+                    <button className={`nav-link${activeTab === 'In transit' ? ' active' : ''}`} onClick={() => setActiveTab('In transit')}>In transit</button>
+                  </li>
+                  <li className="nav-item">
+                    <button className={`nav-link${activeTab === 'Out for delivery' ? ' active' : ''}`} onClick={() => setActiveTab('Out for delivery')}>Out for delivery</button>
+                  </li>
+                  <li className="nav-item">
+                    <button className={`nav-link${activeTab === 'On hold' ? ' active' : ''}`} onClick={() => setActiveTab('On hold')}>On hold</button>
+                  </li>
+                  <li className="nav-item">
+                    <button className={`nav-link${activeTab === 'At local facility' ? ' active' : ''}`} onClick={() => setActiveTab('At local facility')}>At local facility</button>
+                  </li>
+                  <li className="nav-item">
+                    <button className={`nav-link${activeTab === 'Delivered' ? ' active' : ''}`} onClick={() => setActiveTab('Delivered')}>Delivered</button>
+                  </li>
+                  <li className="nav-item">
+                    <button className={`nav-link${activeTab === 'Canceled' ? ' active' : ''}`} onClick={() => setActiveTab('Canceled')}>Canceled</button>
+                  </li>
+                  <li className="nav-item">
+                    <button className={`nav-link${activeTab === 'Returned' ? ' active' : ''}`} onClick={() => setActiveTab('Returned')}>Returned</button>
+                  </li>
+                </ul>
+              </div>
               {/* Delivery Report Cards */}
               <div className="delivery-report-list">
                 {filteredParcels.length > 0 ? (
@@ -249,9 +358,10 @@ function HandlerDashboard() {
                         </div>
                         <div className="col-md-4">
                           <div className="mb-2"><strong>Item Information</strong></div>
-                          <div>Item Name: <b>{parcel.metadata || 'N/A'}</b></div>
+                          <div>Item Name: <b>{parcel.itemName || 'N/A'}</b></div>
                           <div>Item Category: <b>{parcel.type}</b></div>
                           <div>Delivery Code: <b>{parcel.trackingId}</b></div>
+                          <div>Metadata: <b>{parcel.metadata}</b></div>
                         </div>
                         <div className="col-md-4">
                           <div className="mb-2"><strong>Delivery Information</strong></div>
@@ -262,28 +372,16 @@ function HandlerDashboard() {
                         </div>
                       </div>
                       <div className="delivery-report-map mt-3">
-                        {mapLoading[parcel.trackingId] ? (
+                        {mapLocations[parcel.trackingId] && !mapError[parcel.trackingId] ? (
+                          <SingleMap
+                            key={parcel.trackingId}
+                            coords={mapLocations[parcel.trackingId]}
+                            address={parcel.recipientAddress}
+                          />
+                        ) : mapLoading[parcel.trackingId] ? (
                           <div className="map-placeholder">Loading map...</div>
-                        ) : mapError[parcel.trackingId] ? (
-                          <div className="map-placeholder text-danger">Map unavailable</div>
-                        ) : mapLocations[parcel.trackingId] ? (
-                          <MapContainer
-                            center={[mapLocations[parcel.trackingId].lat, mapLocations[parcel.trackingId].lng]}
-                            zoom={13}
-                            style={{ height: '120px', width: '100%', borderRadius: '8px' }}
-                            scrollWheelZoom={false}
-                            dragging={false}
-                            doubleClickZoom={false}
-                            zoomControl={false}
-                            attributionControl={false}
-                          >
-                            <TileLayer url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" />
-                            <Marker position={[mapLocations[parcel.trackingId].lat, mapLocations[parcel.trackingId].lng]}>
-                              <Popup>{parcel.recipientAddress}</Popup>
-                            </Marker>
-                          </MapContainer>
                         ) : (
-                          <div className="map-placeholder">Map view here</div>
+                          <div className="map-placeholder text-danger">Map unavailable</div>
                         )}
                       </div>
                       <div className="d-flex justify-content-end mt-2">
@@ -304,6 +402,7 @@ function HandlerDashboard() {
                     </div>
                     <div className="card-body" style={{ padding: '1.5rem', fontFamily: 'inherit', color: '#222' }}>
                       <ul className="list-group mb-3" style={{ border: 'none', fontSize: '1.05rem' }}>
+                        <li className="list-group-item" style={{ border: 'none', padding: '0.5rem 0' }}><span style={{ fontWeight: 600, color: '#2d5be3' }}>Item Name:</span> {selectedParcel.itemName}</li>
                         <li className="list-group-item" style={{ border: 'none', padding: '0.5rem 0' }}><span style={{ fontWeight: 600, color: '#2d5be3' }}>Recipient:</span> {selectedParcel.recipientName}</li>
                         <li className="list-group-item" style={{ border: 'none', padding: '0.5rem 0' }}><span style={{ fontWeight: 600, color: '#2d5be3' }}>Address:</span> {selectedParcel.recipientAddress}</li>
                         <li className="list-group-item" style={{ border: 'none', padding: '0.5rem 0' }}><span style={{ fontWeight: 600, color: '#2d5be3' }}>Weight:</span> {selectedParcel.weight} kg</li>
@@ -327,11 +426,17 @@ function HandlerDashboard() {
                           className="form-select"
                           value={newStatus}
                           onChange={(e) => setNewStatus(e.target.value)}
-                        >
+                      >
                           <option value="">-- Select Status --</option>
-                          <option value="Pending">Pending</option>
-                          <option value="In Transit">In Transit</option>
+                          <option value="Pending">Processing</option>
+                          <option value="Ready for shipment">Ready for shipment</option>
+                          <option value="Shipped">Shipped</option>
+                          <option value="In transit">In transit</option>
+                          <option value="Out for delivery">Out for delivery</option>
+                          <option value="On hold">On hold</option>
+                          <option value="At local facility">At local facility</option>
                           <option value="Delivered">Delivered</option>
+                          <option value="Canceled">Canceled</option>
                           <option value="Returned">Returned</option>
                         </select>
                       </div>
@@ -352,6 +457,92 @@ function HandlerDashboard() {
               )}
             </>
           )}
+
+          {activePage === 'updateparcel' && (
+            <div className="container mt-4">
+              <div className="admin-breadcrumb mb-2">Home &gt; Handler &gt; Update Parcel</div>
+              <h2 className="mb-4">Update Parcel Status</h2>
+              <div className="card shadow p-4">
+                <form onSubmit={handleUpdateSearch} className="mb-4">
+                  <div className="mb-3">
+                    <label className="form-label">Enter Tracking ID:</label>
+                    <div className="input-group">
+                      <input
+                        type="text"
+                        className="form-control"
+                        value={searchUpdateId}
+                        onChange={(e) => setSearchUpdateId(e.target.value)}
+                        placeholder="Enter tracking ID to update"
+                      />
+                      <button type="submit" className="btn btn-primary">Search</button>
+                    </div>
+                  </div>
+                </form>
+
+                {searchUpdateError && <div className="alert alert-danger">{searchUpdateError}</div>}
+
+                {searchedUpdateParcel && (
+                  <div className="mt-4">
+                    <div className="card">
+                      <div className="card-body">
+                        <h5 className="card-title mb-4">Parcel Details</h5>
+                        <div className="row mb-4">
+                          <div className="col-md-6">
+                            <p><strong>Tracking ID:</strong> {searchedUpdateParcel.trackingId}</p>
+                            <p><strong>Item Name:</strong> {searchedUpdateParcel.itemName}</p>
+                            <p><strong>Recipient:</strong> {searchedUpdateParcel.recipientName}</p>
+                            <p><strong>Address:</strong> {searchedUpdateParcel.recipientAddress}</p>
+                            <p><strong>Type:</strong> {searchedUpdateParcel.type}</p>
+                          </div>
+                          <div className="col-md-6">
+                            <p><strong>Weight:</strong> {searchedUpdateParcel.weight} kg</p>
+                            <p><strong>Created:</strong> {new Date(searchedUpdateParcel.createdAt).toLocaleString()}</p>
+                            <p><strong>Current Status:</strong> <span className="badge bg-info text-dark">{searchedUpdateParcel.status}</span></p>
+                          </div>
+                        </div>
+
+                        <div className="update-form mt-4">
+                          <h6 className="mb-3">Update Status</h6>
+                          <div className="mb-3">
+                            <label className="form-label">New Status:</label>
+                            <select
+                              className="form-select"
+                              value={newStatus}
+                              onChange={(e) => setNewStatus(e.target.value)}
+                            >
+                              <option value="">-- Select Status --</option>
+                              <option value="Pending">Processing</option>
+                              <option value="Ready for shipment">Ready for shipment</option>
+                              <option value="Shipped">Shipped</option>
+                              <option value="In transit">In transit</option>
+                              <option value="Out for delivery">Out for delivery</option>
+                              <option value="On hold">On hold</option>
+                              <option value="At local facility">At local facility</option>
+                              <option value="Delivered">Delivered</option>
+                              <option value="Canceled">Canceled</option>
+                              <option value="Returned">Returned</option>
+                            </select>
+                          </div>
+                          <div className="mb-3">
+                            <label className="form-label">Metadata (optional):</label>
+                            <input
+                              type="text"
+                              className="form-control"
+                              value={metadata}
+                              onChange={(e) => setMetadata(e.target.value)}
+                              placeholder="Additional information"
+                            />
+                          </div>
+                          <button className="btn btn-success" onClick={handleUpdateInPage}>Update Parcel</button>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
+          
           {activePage === 'track' && <TrackParcelPage />}
         </div> 
       </main>

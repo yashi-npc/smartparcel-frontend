@@ -1,5 +1,3 @@
-// api/axiosInstance.js
-
 import axios from 'axios';
 import { getToken } from '../utils/tokens';
 
