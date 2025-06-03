@@ -16,6 +16,8 @@ function SenderDashboard() {
     expectedDeliveryAt: '',
     type: '',
     metadata: '',
+    recipientEmail: '',
+    recipientPhone: '',
   });
 
   const [parcels, setParcels] = useState([]);
@@ -108,8 +110,10 @@ function SenderDashboard() {
       price: parseFloat(formData.price),
       expectedDeliveryAt: formData.expectedDeliveryAt.trim(),
       metadata: formData.metadata.trim() || '',
+      recipientEmail: formData.recipientEmail.trim(),
+      recipientPhone: formData.recipientPhone.trim(),
     };
-    if (!payload.itemName || !payload.recipientName || !payload.recipientAddress || !payload.expectedDeliveryAt || !payload.type || isNaN(payload.price) || payload.price <= 0) {
+    if (!payload.itemName || !payload.recipientName || !payload.recipientAddress || !payload.expectedDeliveryAt || !payload.type || isNaN(payload.price) || payload.price <= 0 || !payload.recipientEmail || !payload.recipientPhone) {
       setMessage('Please fill out all required fields correctly.');
       return;
     }
@@ -130,6 +134,8 @@ function SenderDashboard() {
         type: '',
         metadata: '',
         expectedDeliveryAt: '',
+        recipientEmail: '',
+        recipientPhone: '',
       });
     } catch (err) {
       const errorMsg = err.response?.data?.message || 'Error creating parcel.';
@@ -232,7 +238,8 @@ function SenderDashboard() {
                           <div className="d-flex align-items-center mb-2">
                             <div>
                               <div>{parcel.recipientName}</div>
-                              <div className="text-muted small">EMP-3321</div>
+                              <div className="text-muted small">{parcel.recipientEmail}</div>
+                              <div className="text-muted small">{parcel.recipientPhone}</div>
                             </div>
                           </div>
                         </div>
@@ -346,6 +353,28 @@ function SenderDashboard() {
                       value={formData.expectedDeliveryAt}
                       onChange={handleChange}
                       min={todayStr}
+                      required
+                    />
+                  </div>
+                  <div className="col-md-6 mb-3">
+                    <label className="form-label">Recipient Email:</label>
+                    <input
+                      type="email"
+                      className="form-control"
+                      name="recipientEmail"
+                      value={formData.recipientEmail}
+                      onChange={handleChange}
+                      required
+                    />
+                  </div>
+                  <div className="col-md-6 mb-3">
+                    <label className="form-label">Recipient Phone:</label>
+                    <input
+                      type="tel"
+                      className="form-control"
+                      name="recipientPhone"
+                      value={formData.recipientPhone}
+                      onChange={handleChange}
                       required
                     />
                   </div>

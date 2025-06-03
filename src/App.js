@@ -9,6 +9,7 @@ import HandlerDashboard from './components/HandlerDashboard';
 import AdminDashboard from './components/AdminDashboard';
 import ParcelDetailsPage from './pages/ParcelDetailsPage';
 import LoginPage from './pages/LoginPage';
+import EnterOtp from './pages/EnterOTP';
 console.log("RegisterPage is:", RegisterPage);
 function App() {
   return (
@@ -21,6 +22,7 @@ function App() {
         <Route path="/handler/dashboard" element={<HandlerDashboard />} />
         <Route path="/admin/dashboard" element={<AdminDashboard />} />
         <Route path="/parcel/:trackingId" element={<ParcelDetailsPage />} />
+        <Route path="/enter-otp" element={<EnterOtp />} />
       </Routes>
     </Router>
   );  

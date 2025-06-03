@@ -46,6 +46,8 @@ function TrackParcelPage() {
             <ul className="list-group">
               <li className="list-group-item"><strong>Item Name:</strong> {searchedParcel.itemName}</li>
               <li className="list-group-item"><strong>Recipient:</strong> {searchedParcel.recipientName}</li>
+              <li className="list-group-item"><strong>Recipient Email:</strong> {searchedParcel.recipientEmail}</li>
+              <li className="list-group-item"><strong>Recipient Phone:</strong> {searchedParcel.recipientPhone}</li>
               <li className="list-group-item"><strong>Address:</strong> {searchedParcel.recipientAddress}</li>
               <li className="list-group-item"><strong>Weight:</strong> {searchedParcel.weight} kg</li>
               <li className="list-group-item"><strong>Revenue:</strong> {searchedParcel.price} Rs</li>

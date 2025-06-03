@@ -43,6 +43,8 @@ const ParcelDetailsPage = () => {
       <p><strong>Item Name:</strong> {parcel.itemName}</p>
       <p><strong>Sender:</strong> {parcel.senderEmail}</p>
       <p><strong>Recipient:</strong> {parcel.recipientName}</p>
+      <p><strong>Recipient Email:</strong> {parcel.recipientEmail}</p>
+      <p><strong>Recipient Phone:</strong> {parcel.recipientPhone}</p>
       <p><strong>Address:</strong> {parcel.recipientAddress}</p>
       <p><strong>Type:</strong> {parcel.type}</p>
       <p><strong>Weight:</strong> {parcel.weight}</p>

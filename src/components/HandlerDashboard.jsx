@@ -37,7 +37,33 @@ function HandlerDashboard() {
   const [searchUpdateId, setSearchUpdateId] = useState('');
   const [searchedUpdateParcel, setSearchedUpdateParcel] = useState(null);
   const [searchUpdateError, setSearchUpdateError] = useState('');
+  const [otpModalOpen, setOtpModalOpen] = useState(false);
+  const [pendingParcel, setPendingParcel] = useState(null);
+  const [pendingStatus, setPendingStatus] = useState('');
+  const [pendingMetadata, setPendingMetadata] = useState('');
+
   
+  const sendOtp = async (trackingId) => {
+  try {
+    const response = await fetch("http://localhost:8080/parceltrack/send-otp", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ trackingId }),
+    });
+    const data = await response.json();
+    if (!response.ok) {
+      throw new Error(data.error || "Failed to send OTP");
+    }
+    return data;
+  } catch (err) {
+    alert(err.message);
+    return null;
+  }
+};
+ 
+
   const today = new Date();
    const isSameDay = (dateA, dateB) => {
     if (!dateA || !dateB) return false;
@@ -172,6 +198,13 @@ function HandlerDashboard() {
 
   const handleUpdateStatus = async () => {
     if (!newStatus.trim()) return;
+    if (newStatus.toLowerCase() === 'delivered') {
+      setPendingParcel(selectedParcel);
+      setPendingStatus(newStatus);
+      setPendingMetadata(metadata || selectedParcel.metadata);
+      setOtpModalOpen(true);
+      return;
+    }
     try {
       await updateParcelStatus(selectedParcel.trackingId, newStatus, metadata || selectedParcel.metadata);
       setShowEditForm(false);
@@ -208,6 +241,13 @@ function HandlerDashboard() {
 
   const handleUpdateInPage = async () => {
     if (!newStatus.trim() || !searchedUpdateParcel) return;
+    if (newStatus.toLowerCase() === 'delivered') {
+      setPendingParcel(searchedUpdateParcel);
+      setPendingStatus(newStatus);
+      setPendingMetadata(metadata || searchedUpdateParcel.metadata);
+      setOtpModalOpen(true);
+      return;
+    }
     try {
       await updateParcelStatus(searchedUpdateParcel.trackingId, newStatus, metadata || searchedUpdateParcel.metadata);
       const updatedData = await trackParcelById(searchedUpdateParcel.trackingId);
@@ -240,6 +280,20 @@ const SingleMap = ({ coords, address }) => {
     </MapContainer>
   );
 };
+
+   useEffect(() => {
+  const triggerOtp = async () => {
+    if (otpModalOpen && pendingParcel) {
+      const res = await sendOtp(pendingParcel.trackingId);
+      if (res) {
+        navigate(`/enter-otp?trackingId=${pendingParcel.trackingId}&action=deliver`);
+        setOtpModalOpen(false);
+        setShowEditForm(false);
+      }
+    }
+  };
+  triggerOtp();
+}, [otpModalOpen, pendingParcel, navigate]);
 
   return (
     <div className="admin-dashboard-layout">
@@ -375,7 +429,8 @@ const SingleMap = ({ coords, address }) => {
                           <div className="d-flex align-items-center mb-2">
                             <div>
                               <div>{parcel.recipientName}</div>
-                              <div className="text-muted small">EMP-3321</div>
+                              <div className="text-muted small">{parcel.recipientEmail}</div>
+                              <div className="text-muted small">{parcel.recipientPhone}</div>
                             </div>
                           </div>
                         </div>
@@ -428,6 +483,8 @@ const SingleMap = ({ coords, address }) => {
                       <ul className="list-group mb-3" style={{ border: 'none', fontSize: '1.05rem' }}>
                         <li className="list-group-item" style={{ border: 'none', padding: '0.5rem 0' }}><span style={{ fontWeight: 600, color: '#2d5be3' }}>Item Name:</span> {selectedParcel.itemName}</li>
                         <li className="list-group-item" style={{ border: 'none', padding: '0.5rem 0' }}><span style={{ fontWeight: 600, color: '#2d5be3' }}>Recipient:</span> {selectedParcel.recipientName}</li>
+                        <li className="list-group-item" style={{ border: 'none', padding: '0.5rem 0' }}><span style={{ fontWeight: 600, color: '#2d5be3' }}>Recipient Email:</span> {selectedParcel.recipientEmail}</li>
+                        <li className="list-group-item" style={{ border: 'none', padding: '0.5rem 0' }}><span style={{ fontWeight: 600, color: '#2d5be3' }}>Recipient Phone:</span> {selectedParcel.recipientPhone}</li>
                         <li className="list-group-item" style={{ border: 'none', padding: '0.5rem 0' }}><span style={{ fontWeight: 600, color: '#2d5be3' }}>Address:</span> {selectedParcel.recipientAddress}</li>
                         <li className="list-group-item" style={{ border: 'none', padding: '0.5rem 0' }}><span style={{ fontWeight: 600, color: '#2d5be3' }}>Weight:</span> {selectedParcel.weight} kg</li>
                         <li className="list-group-item" style={{ border: 'none', padding: '0.5rem 0' }}><span style={{ fontWeight: 600, color: '#2d5be3' }}>Type:</span> {selectedParcel.type}</li>
@@ -518,6 +575,8 @@ const SingleMap = ({ coords, address }) => {
                             <p><strong>Tracking ID:</strong> {searchedUpdateParcel.trackingId}</p>
                             <p><strong>Item Name:</strong> {searchedUpdateParcel.itemName}</p>
                             <p><strong>Recipient:</strong> {searchedUpdateParcel.recipientName}</p>
+                            <p><strong>Recipient Email:</strong> {searchedUpdateParcel.recipientEmail}</p>
+                            <p><strong>Recipient Phone:</strong> {searchedUpdateParcel.recipientPhone}</p>
                             <p><strong>Address:</strong> {searchedUpdateParcel.recipientAddress}</p>
                             <p><strong>Type:</strong> {searchedUpdateParcel.type}</p>
                             <p><strong>Price:</strong> {searchedUpdateParcel.price ? `₹${searchedUpdateParcel.price}` : 'N/A'}</p>
