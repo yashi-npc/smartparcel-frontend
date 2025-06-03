@@ -286,6 +286,11 @@
   margin-bottom: 2rem;
   border: 1px solid #e5e7eb;
 }
+.delivery-report-card.delivered-card {
+  background: #e6ffe6 !important;
+  border: 2px solid #2ecc40 !important;
+  box-shadow: 0 4px 16px rgba(46,204,64,0.10);
+}
 .delivery-report-header {
   display: flex;
   align-items: center;

@@ -53,7 +53,9 @@ function TrackParcelPage() {
               <li className="list-group-item"><strong>Metadata:</strong> {searchedParcel.metadata || 'N/A'}</li>
               <li className="list-group-item"><strong>Status:</strong> {searchedParcel.status}</li>
               <li className="list-group-item"><strong>Created At:</strong> {new Date(searchedParcel.createdAt).toLocaleString()}</li>
-              <li className="list-group-item"><strong>Expected Delivery At:</strong> {new Date(searchedParcel.expectedDeliveryAt).toLocaleString()}</li>
+              <li className="list-group-item"><strong>Expected Delivery At:</strong> {searchedParcel.expectedDeliveryAt ? new Date(searchedParcel.expectedDeliveryAt).toLocaleString() : 'N/A'}</li>
+              <li className="list-group-item"><strong>Delivered At:</strong> {searchedParcel.deliveryAt ? new Date(searchedParcel.deliveryAt).toLocaleString() : 'Not delivered yet'}</li>
+              
               
             </ul>
           </div>

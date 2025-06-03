@@ -37,7 +37,7 @@ const ParcelDetailsPage = () => {
   if (!parcel) return <p>Parcel not found.</p>;
 
   return (
-    <div className="container mt-5">
+    <div className="container mt-5" style={{ background: '#fff', color: '#222', borderRadius: '12px', padding: '2rem' }}>
       <h2>Parcel Details</h2>
       <p><strong>Tracking ID:</strong> {parcel.trackingId}</p>
       <p><strong>Item Name:</strong> {parcel.itemName}</p>
@@ -46,15 +46,23 @@ const ParcelDetailsPage = () => {
       <p><strong>Address:</strong> {parcel.recipientAddress}</p>
       <p><strong>Type:</strong> {parcel.type}</p>
       <p><strong>Weight:</strong> {parcel.weight}</p>
-      <p><strong>Price:</strong> {parcel.price}</p>
-      <li className="list-group-item"><strong>Expected Delivery At:</strong> {new Date(parcel.expectedDeliveryAt).toLocaleString()}</li>
-      <p><strong>Status:</strong></p>
+      <p><strong>Price:</strong> {parcel.price ? `₹${parcel.price}` : 'N/A'}</p>
+      <p><strong>Expected Delivery At:</strong> {parcel.expectedDeliveryAt ? new Date(parcel.expectedDeliveryAt).toLocaleString() : 'N/A'}</p>
+      <p><strong>Delivered At:</strong> {parcel.deliveryAt ? new Date(parcel.deliveryAt).toLocaleString() : 'Not delivered yet'}</p>
+      <p><strong>Status:</strong> <span className="badge bg-info text-dark">{parcel.status}</span></p>
               
       <select value={status} onChange={e => setStatus(e.target.value)} className="form-select w-50">
         <option value="Created">Created</option>
-        <option value="In Transit">In Transit</option>
+        <option value="Pending">Processing</option>
+        <option value="Ready for shipment">Ready for shipment</option>
+        <option value="Shipped">Shipped</option>
+        <option value="In transit">In transit</option>
+        <option value="Out for delivery">Out for delivery</option>
+        <option value="On hold">On hold</option>
+        <option value="At local facility">At local facility</option>
         <option value="Delivered">Delivered</option>
-        <option value="Cancelled">Cancelled</option>
+        <option value="Canceled">Canceled</option>
+        <option value="Returned">Returned</option>
       </select>
       <div className="mb-3 mt-2">
         <label>Metadata (optional):</label>

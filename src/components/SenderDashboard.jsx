@@ -221,7 +221,7 @@ function SenderDashboard() {
               <div className="delivery-report-list">
                 {filteredParcels.length > 0 ? (
                   filteredParcels.map((parcel) => (
-                    <div className="delivery-report-card mb-4" key={parcel.trackingId}>
+                    <div className={`delivery-report-card mb-4${(parcel.status || '').toLowerCase() === 'delivered' ? ' delivered-card' : ''}`} key={parcel.trackingId}>
                       <div className="delivery-report-header">
                         <span className="delivery-type">{parcel.type === 'Express' ? 'Express Delivery' : 'Regular Delivery'}</span>
                         <span className="delivery-id">#{parcel.trackingId}</span>
@@ -246,7 +246,7 @@ function SenderDashboard() {
                         <div className="col-md-4">
                           <div className="mb-2"><strong>Delivery Information</strong></div>
                           <div>Location: <b>{parcel.recipientAddress}</b></div>
-                          <div>Condition: <span className="text-primary">Good Condition</span></div>
+                          <div>Status: <span className="text-primary">{parcel.status}</span></div>
                           <div>Delivery Start: <b>{new Date(parcel.createdAt).toLocaleDateString()}</b></div>
                           <div>Expected Delivery: <b>{parcel.expectedDeliveryAt ? new Date(parcel.expectedDeliveryAt).toLocaleDateString() : 'N/A'}</b></div>
                         </div>

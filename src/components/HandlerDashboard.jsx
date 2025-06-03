@@ -90,9 +90,18 @@ function HandlerDashboard() {
     window.onpopstate = () => { window.history.go(1); };
   }, []);
 
-  const loadParcels = async () => {
+  const loadParcels = async (highlightedId = null) => {
     try {
       const data = await fetchParcels();
+      if (highlightedId) {
+        // Move the updated parcel to the top
+        const idx = data.findIndex(p => p.trackingId === highlightedId);
+        if (idx !== -1) {
+          const [updated] = data.splice(idx, 1);
+          setParcels([updated, ...data]);
+          return;
+        }
+      }
       setParcels(data);
     } catch (err) {
       console.error('Error fetching parcels:', err);
@@ -168,7 +177,7 @@ function HandlerDashboard() {
       setShowEditForm(false);
       setSelectedParcel(null);
       setNewStatus('');
-      loadParcels();
+      await loadParcels(selectedParcel.trackingId); // Pass updated ID
     } catch (error) {
       alert('Failed to update parcel.');
     }
@@ -203,6 +212,7 @@ function HandlerDashboard() {
       await updateParcelStatus(searchedUpdateParcel.trackingId, newStatus, metadata || searchedUpdateParcel.metadata);
       const updatedData = await trackParcelById(searchedUpdateParcel.trackingId);
       setSearchedUpdateParcel(updatedData);
+      await loadParcels(searchedUpdateParcel.trackingId); // Pass updated ID
       alert('Parcel updated successfully!');
     } catch (error) {
       alert('Failed to update parcel.');
@@ -354,7 +364,7 @@ const SingleMap = ({ coords, address }) => {
               <div className="delivery-report-list">
                 {filteredParcels.length > 0 ? (
                   filteredParcels.map((parcel) => (
-                    <div className="delivery-report-card mb-4" key={parcel.trackingId}>
+                    <div className={`delivery-report-card mb-4${(parcel.status || '').toLowerCase() === 'delivered' ? ' delivered-card' : ''}`} key={parcel.trackingId}>
                       <div className="delivery-report-header">
                         <span className="delivery-type">{parcel.type === 'Express' ? 'Express Delivery' : 'Regular Delivery'}</span>
                         <span className="delivery-id">#{parcel.trackingId}</span>
@@ -372,18 +382,17 @@ const SingleMap = ({ coords, address }) => {
                         <div className="col-md-4">
                           <div className="mb-2"><strong>Item Information</strong></div>
                           <div>Item Name: <b>{parcel.itemName || 'N/A'}</b></div>
-                          <div>Item Category: <b>{parcel.type}</b></div>
-                          <div>Price: <b>{parcel.price ? `₹${parcel.price}` : 'N/A'}</b></div>
+                          <div>Item Price: <b>{parcel.price ? `₹${parcel.price}` : 'N/A'}</b></div>
                           <div>Delivery Code: <b>{parcel.trackingId}</b></div>
                           <div>Metadata: <b>{parcel.metadata}</b></div>
                         </div>
                         <div className="col-md-4">
                           <div className="mb-2"><strong>Delivery Information</strong></div>
                           <div>Location: <b>{parcel.recipientAddress}</b></div>
-                          <div>Condition: <span className="text-primary">Good Condition</span></div>
+                          <div>Status: <span className="text-primary">{parcel.status}</span></div>
                           <div>Delivery Start: <b>{new Date(parcel.createdAt).toLocaleDateString()}</b></div>
                           <div>Expected Delivery: <b>{parcel.expectedDeliveryAt ? new Date(parcel.expectedDeliveryAt).toLocaleDateString() : 'N/A'}</b></div>
-                          <div>Delivered At: <b>{parcel.deliveryAt ? new Date(parcel.deliveryAt).toLocaleDateString() : 'N/A'}</b></div>
+                          <div>Delivered At: <b>{parcel.deliveryAt ? new Date(parcel.deliveryAt).toLocaleDateString() : 'Not delivered yet'}</b></div>
                         </div>
                       </div>
                       <div className="delivery-report-map mt-3">
@@ -432,7 +441,7 @@ const SingleMap = ({ coords, address }) => {
                         </li>
                         <li className="list-group-item" style={{ border: 'none', padding: '0.5rem 0' }}><span style={{ fontWeight: 600, color: '#2d5be3' }}>Price:</span> {selectedParcel.price ? `₹${selectedParcel.price}` : 'N/A'}</li>
                         <li className="list-group-item" style={{ border: 'none', padding: '0.5rem 0' }}><span style={{ fontWeight: 600, color: '#2d5be3' }}>Expected Delivery:</span> {selectedParcel.expectedDeliveryAt ? new Date(selectedParcel.expectedDeliveryAt).toLocaleString() : 'N/A'}</li>
-                        <li className="list-group-item" style={{ border: 'none', padding: '0.5rem 0' }}><span style={{ fontWeight: 600, color: '#2d5be3' }}>Delivered At:</span> {selectedParcel.deliveryAt ? new Date(selectedParcel.deliveryAt).toLocaleString() : 'N/A'}</li>
+                        <li className="list-group-item" style={{ border: 'none', padding: '0.5rem 0' }}><span style={{ fontWeight: 600, color: '#2d5be3' }}>Delivered At:</span> {selectedParcel.deliveryAt ? new Date(selectedParcel.deliveryAt).toLocaleString() : 'Not delivered yet'}</li>
                       </ul>
                       <div className="mb-4 text-center">
                         <QRCodeCanvas value={`http://localhost:3000/parcel/${selectedParcel.trackingId}`} size={160} />
@@ -513,7 +522,7 @@ const SingleMap = ({ coords, address }) => {
                             <p><strong>Type:</strong> {searchedUpdateParcel.type}</p>
                             <p><strong>Price:</strong> {searchedUpdateParcel.price ? `₹${searchedUpdateParcel.price}` : 'N/A'}</p>
                             <p><strong>Expected Delivery:</strong> {searchedUpdateParcel.expectedDeliveryAt ? new Date(searchedUpdateParcel.expectedDeliveryAt).toLocaleString() : 'N/A'}</p>
-                            <p><strong>Delivered At:</strong> {searchedUpdateParcel.deliveryAt ? new Date(searchedUpdateParcel.deliveryAt).toLocaleString() : 'N/A'}</p>
+                            <p><strong>Delivered At:</strong> {searchedUpdateParcel.deliveryAt ? new Date(searchedUpdateParcel.deliveryAt).toLocaleString() : 'Not delivered yet'}</p>
                           </div>
                           <div className="col-md-6">
                             <p><strong>Weight:</strong> {searchedUpdateParcel.weight} kg</p>

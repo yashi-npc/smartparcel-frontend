@@ -389,7 +389,7 @@ function AdminDashboard() {
               <div className="delivery-report-list">
                 {filteredParcels.length > 0 ? (
                   filteredParcels.map((parcel) => (
-                    <div className="delivery-report-card mb-4" key={parcel.trackingId}>
+                    <div className={`delivery-report-card mb-4${(parcel.status || '').toLowerCase() === 'delivered' ? ' delivered-card' : ''}`} key={parcel.trackingId}>
                       <div className="delivery-report-header">
                         <span className="delivery-type">{parcel.type === 'Express' ? 'Express Delivery' : 'Regular Delivery'}</span>
                         <span className="delivery-id">#{parcel.trackingId}</span>
@@ -414,9 +414,10 @@ function AdminDashboard() {
                         <div className="col-md-4">
                           <div className="mb-2"><strong>Delivery Information</strong></div>
                           <div>Location: <b>{parcel.recipientAddress}</b></div>
-                          <div>Condition: <span className="text-primary">Good Condition</span></div>
+                          <div>Status: <span className="text-primary">{parcel.status}</span></div>
                           <div>Delivery Start: <b>{new Date(parcel.createdAt).toLocaleDateString()}</b></div>
                           <div>Expected Delivery: <b>{parcel.expectedDeliveryAt ? new Date(parcel.expectedDeliveryAt).toLocaleDateString() : 'N/A'}</b></div>
+                          <div>Delivered At: <b>{parcel.deliveryAt ? new Date(parcel.deliveryAt).toLocaleDateString() : 'Not delivered yet'}</b></div>
                         </div>
                       </div>
                       <div className="delivery-report-map mt-3">
@@ -460,7 +461,7 @@ function AdminDashboard() {
                 <div className="modal-overlay">
                   <div className="modal-card" style={{ maxHeight: '80vh', overflowY: 'auto', width: '500px', margin: '0 auto', borderRadius: '16px', boxShadow: '0 8px 32px rgba(45,91,227,0.10)', background: '#fff', padding: 0, fontFamily: 'Segoe UI, Arial, sans-serif' }}>
                     <div className="card-header" style={{ background: '#2d5be3', color: '#fff', borderRadius: '16px 16px 0 0', padding: '1.25rem 1.5rem', fontWeight: 700, fontSize: '1.2rem', letterSpacing: '0.5px', fontFamily: 'inherit' }}>
-                      Update Parcel <code style={{ background: 'rgba(255,255,255,0.15)', borderRadius: '4px', padding: '2px 6px', fontWeight: 600, fontSize: '1rem', color: '#fff' }}>{selectedParcel.trackingId}</code>
+                      Details <code style={{ background: 'rgba(255,255,255,0.15)', borderRadius: '4px', padding: '2px 6px', fontWeight: 600, fontSize: '1rem', color: '#fff' }}>{selectedParcel.trackingId}</code>
                     </div>
                     <div className="card-body" style={{ padding: '1.5rem', fontFamily: 'inherit', color: '#222' }}>
                       <ul className="list-group mb-3" style={{ border: 'none', fontSize: '1.05rem' }}>
@@ -468,15 +469,19 @@ function AdminDashboard() {
                         <li className="list-group-item" style={{ border: 'none', padding: '0.5rem 0' }}><span style={{ fontWeight: 600, color: '#2d5be3' }}>Recipient:</span> {selectedParcel.recipientName}</li>
                         <li className="list-group-item" style={{ border: 'none', padding: '0.5rem 0' }}><span style={{ fontWeight: 600, color: '#2d5be3' }}>Address:</span> {selectedParcel.recipientAddress}</li>
                         <li className="list-group-item" style={{ border: 'none', padding: '0.5rem 0' }}><span style={{ fontWeight: 600, color: '#2d5be3' }}>Weight:</span> {selectedParcel.weight} kg</li>
+                        <li className="list-group-item" style={{ border: 'none', padding: '0.5rem 0' }}><span style={{ fontWeight: 600, color: '#2d5be3' }}>Price:</span> {selectedParcel.price ? `₹${selectedParcel.price}` : 'N/A'}</li>
                         <li className="list-group-item" style={{ border: 'none', padding: '0.5rem 0' }}><span style={{ fontWeight: 600, color: '#2d5be3' }}>Type:</span> {selectedParcel.type}</li>
                         <li className="list-group-item" style={{ border: 'none', padding: '0.5rem 0' }}><span style={{ fontWeight: 600, color: '#2d5be3' }}>Metadata:</span> {selectedParcel.metadata || 'N/A'}</li>
                         <li className="list-group-item" style={{ border: 'none', padding: '0.5rem 0' }}><span style={{ fontWeight: 600, color: '#2d5be3' }}>Created At:</span> {new Date(selectedParcel.createdAt).toLocaleString()}</li>
                         {selectedParcel.updatedAt && (
                           <li className="list-group-item" style={{ border: 'none', padding: '0.5rem 0' }}><span style={{ fontWeight: 600, color: '#2d5be3' }}>Last Updated:</span> {new Date(selectedParcel.updatedAt).toLocaleString()}</li>
                         )}
+                        <li className="list-group-item" style={{ border: 'none', padding: '0.5rem 0' }}><span style={{ fontWeight: 600, color: '#2d5be3' }}>Expected Delivery:</span> {selectedParcel.expectedDeliveryAt ? new Date(selectedParcel.expectedDeliveryAt).toLocaleString() : 'N/A'}</li>
+                        <li className="list-group-item" style={{ border: 'none', padding: '0.5rem 0' }}><span style={{ fontWeight: 600, color: '#2d5be3' }}>Delivered At:</span> {selectedParcel.deliveryAt ? new Date(selectedParcel.deliveryAt).toLocaleString() : 'Not delivered yet'}</li>
                         <li className="list-group-item" style={{ border: 'none', padding: '0.5rem 0' }}>
                           <span style={{ fontWeight: 600, color: '#2d5be3' }}>Current Status:</span> <span className="badge bg-info text-dark" style={{ fontSize: '1rem', padding: '0.4em 0.8em', borderRadius: '6px', fontWeight: 600 }}>{selectedParcel.status}</span>
                         </li>
+
                       </ul>
                       <div className="mb-4 text-center">
                         <QRCodeCanvas value={`http://localhost:3000/parcel/${selectedParcel.trackingId}`} size={160} />
