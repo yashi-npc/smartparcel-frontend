@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { useSearchParams, useNavigate } from "react-router-dom";
 import axios from "axios";
 
@@ -17,9 +17,13 @@ function EnterOtp() {
         otp,
       });
       alert("OTP Verified! Parcel marked as delivered.");
-      navigate("/handler-dashboard");
+      navigate("/handler/dashboard");
     } catch (err) {
-      setError(err.response?.data || "Verification failed");
+      const msg =
+        err.response?.data?.error ||
+        err.response?.data?.message ||
+        (typeof err.response?.data === "string" ? err.response.data : "Verification failed");
+      setError(msg);
     }
   };
 
@@ -31,7 +35,10 @@ function EnterOtp() {
         <input
           type="text"
           value={otp}
-          onChange={(e) => setOtp(e.target.value)}
+          onChange={(e) => {
+            setOtp(e.target.value);
+            setError("");
+          }}
           placeholder="Enter OTP"
           className="w-full p-2 mb-3 rounded bg-gray-700 text-white"
         />

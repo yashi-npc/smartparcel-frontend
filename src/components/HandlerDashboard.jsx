@@ -52,13 +52,28 @@ function HandlerDashboard() {
       },
       body: JSON.stringify({ trackingId }),
     });
-    const data = await response.json();
+    const contentType = response.headers.get("content-type");
+    let data;
+    if (contentType && contentType.includes("application/json")) {
+      data = await response.json();
+    } else {
+      // Try to get text (HTML error page or other)
+      const text = await response.text();
+      throw new Error(
+        `Unexpected response from server. Please try again.\n${text.substring(0, 200)}`
+      );
+    }
     if (!response.ok) {
       throw new Error(data.error || "Failed to send OTP");
     }
     return data;
   } catch (err) {
-    alert(err.message);
+    // Show a user-friendly error
+    alert(
+      err.message.includes("Unexpected token")
+        ? "Server error or CORS issue. Please check your backend and network."
+        : err.message
+    );
     return null;
   }
 };
@@ -96,8 +111,9 @@ function HandlerDashboard() {
   const filteredParcels = parcels.filter(parcel => {
     // Tab filter
     let tabMatch = true;
-    if (activeTab !== 'all') tabMatch = parcel.status === activeTab;
-    
+    if (activeTab !== 'all') {
+      tabMatch = (parcel.status || '').toLowerCase() === activeTab.toLowerCase();
+    }
     // Search filter (tracking ID, case-insensitive, partial)
     let searchMatch = true;
     if (dashboardSearch.trim() !== "") {
