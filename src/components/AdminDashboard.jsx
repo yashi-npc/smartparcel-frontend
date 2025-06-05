@@ -225,9 +225,24 @@ function AdminDashboard() {
   const days = [...Array(7)].map((_, i) => {
     const d = new Date();
     d.setDate(d.getDate() - (6 - i));
-    return d.toISOString().slice(0, 10);
+    return d;
   });
-  const deliveriesPerDay = days.map(day => parcels.filter(p => p.createdAt && p.createdAt.slice(0, 10) === day).length);
+
+  // Debug: log createdAt values
+  console.log('Parcel createdAt values:', parcels.map(p => p.createdAt));
+
+  // Helper to check if two dates are the same day (local time)
+  function isSameDayLocal(dateA, dateB) {
+    if (!dateA || !dateB) return false;
+    const a = new Date(dateA);
+    return a.getFullYear() === dateB.getFullYear() &&
+      a.getMonth() === dateB.getMonth() &&
+      a.getDate() === dateB.getDate();
+  }
+
+  const deliveriesPerDay = days.map(day =>
+    parcels.filter(p => p.createdAt && isSameDayLocal(p.createdAt, day)).length
+  );
 
   const pieData = {
     labels: statusLabels,
@@ -242,7 +257,7 @@ function AdminDashboard() {
     ],
   };
   const barData = {
-    labels: days.map(d => d.slice(5)),
+    labels: days.map(d => `${d.getMonth() + 1}-${d.getDate()}`),
     datasets: [
       {
         label: 'Parcels Created',

@@ -246,13 +246,12 @@ function HandlerDashboard() {
     if (!searchUpdateId.trim()) {
       setSearchUpdateError('Please enter a tracking ID.');
       return;
-    }
-    try {
+    }    try {
       const data = await trackParcelById(searchUpdateId.trim());
       setSearchedUpdateParcel(data);
       setNewStatus(data.status);
       setMetadata(data.metadata || '');
-      setCurrentLocation(data.currentLocation);
+      setCurrentLocation(data.currentLocation || '');
     } catch (err) {
       const msg = err.response?.data?.message || 'Parcel not found.';
       setSearchUpdateError(msg);
@@ -626,20 +625,22 @@ const SingleMap = ({ coords, address }) => {
                             <p><strong>Item Name:</strong> {searchedUpdateParcel.itemName}</p>
                             <p><strong>Recipient:</strong> {searchedUpdateParcel.recipientName}</p>
                             <p><strong>Recipient Email:</strong> {searchedUpdateParcel.recipientEmail}</p>
-                            <p><strong>Recipient Phone:</strong> {searchedUpdateParcel.recipientPhone}</p>
-                            <p><strong>Pickup Location:</strong> {searchedUpdateParcel.pickupLocation}</p>
+                            <p><strong>Recipient Phone:</strong> {searchedUpdateParcel.recipientPhone}</p>                            <p><strong>Pickup Location:</strong> {searchedUpdateParcel.pickupLocation}</p>
                             <p><strong>Address:</strong> {searchedUpdateParcel.recipientAddress}</p>
                             <p><strong>Current Location:</strong> {searchedUpdateParcel.currentLocation}</p>
                             <p><strong>Type:</strong> {searchedUpdateParcel.type}</p>
                             <p><strong>Price:</strong> {searchedUpdateParcel.price ? `₹${searchedUpdateParcel.price}` : 'N/A'}</p>
                             <p><strong>Expected Delivery:</strong> {searchedUpdateParcel.expectedDeliveryAt ? new Date(searchedUpdateParcel.expectedDeliveryAt).toLocaleString() : 'N/A'}</p>
                             <p><strong>Delivered At:</strong> {searchedUpdateParcel.deliveryAt ? new Date(searchedUpdateParcel.deliveryAt).toLocaleString() : 'Not delivered yet'}</p>
-                          </div>
-                          <div className="col-md-6">
-                            <p><strong>Weight:</strong> {searchedUpdateParcel.weight} kg</p>
+                          </div>                          <div className="col-md-6">                            <p><strong>Weight:</strong> {searchedUpdateParcel.weight} kg</p>
                             <p><strong>Created:</strong> {new Date(searchedUpdateParcel.createdAt).toLocaleString()}</p>
                             <p><strong>Current Status:</strong> <span className="badge bg-info text-dark">{searchedUpdateParcel.status}</span></p>
                             <p><strong>Pickup Location:</strong> {searchedUpdateParcel.pickupLocation || 'N/A'}</p>
+                              {/* QR Code display */}
+                            <div className="text-center" style={{ marginLeft: -405, marginTop: 110 }}>
+                              <QRCodeCanvas value={`http://localhost:3000/parcel/${searchedUpdateParcel.trackingId}`} size={170} />
+                              <div style={{ color: '#2d5be3', fontWeight: 600, marginTop: 8 }}>Tracking ID: <code>{searchedUpdateParcel.trackingId}</code></div>
+                            </div>
                           </div>
                         </div>
 
@@ -664,8 +665,7 @@ const SingleMap = ({ coords, address }) => {
                               <option value="Canceled">Canceled</option>
                               <option value="Returned">Returned</option>
                             </select>
-                          </div>
-                          <div className="mb-3">
+                          </div>                          <div className="mb-3">
                             <label className="form-label">Current Location</label>
                             <input
                               type="text"
@@ -676,6 +676,7 @@ const SingleMap = ({ coords, address }) => {
                               required
                             />
                           </div>
+                          
                           <div className="mb-3">
                             <label className="form-label">Metadata (optional):</label>
                             <input

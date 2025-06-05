@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import axios from 'axios';
 import './RegisterPage.css';
+import './HomePage.css'; // Reuse homepage styles
 
 const RegisterPage = () => {
   const navigate = useNavigate();
@@ -39,82 +40,83 @@ const RegisterPage = () => {
     }
   };
   return (
-    <div className="min-vh-100 d-flex align-items-center" style={{ backgroundColor: '#f8f9fa' }}>
-      <div className="container">
-        <div className="row justify-content-center">
-          <div className="col-md-6 col-lg-5">
-            <div className="card shadow-lg border-0">
-              <div className="card-body p-5">
-                <div className="text-center mb-4">
-                  <h1 className="h3 mb-3 fw-bold" style={{ color: '#2d5be3' }}>ShipWise</h1>
-                  <p className="text-muted">Create your account</p>
+    <div className="homepage-bg-nice">
+      <div className="homepage-overlay">
+        <div className="homepage-card">
+          <img src="/smartparcelicon-light.png" alt="SmartParcel Logo" className="homepage-logo" />
+          <h1 className="homepage-title">Register for ShipWise</h1>
+          <div className="card shadow-lg border-0">
+            <div className="card-body p-5">
+              <div className="text-center mb-4">
+                <h1 className="h3 mb-3 fw-bold" style={{ color: '#2d5be3' }}>ShipWise</h1>
+                <p className="text-muted">Create your account</p>
+              </div>
+              <form onSubmit={handleSubmit}>
+                <div className="mb-4">
+                  <label className="form-label text-muted fw-semibold">Full Name</label>
+                  <input
+                    type="text"
+                    className="form-control form-control-lg bg-light border-0"
+                    name="name"
+                    value={form.name}
+                    onChange={handleChange}
+                    required
+                    placeholder="Enter your name"
+                    style={{ padding: '0.75rem 1rem' }}
+                  />
                 </div>
-                <form onSubmit={handleSubmit}>
-                  <div className="mb-4">
-                    <label className="form-label text-muted fw-semibold">Full Name</label>
-                    <input
-                      type="text"
-                      className="form-control form-control-lg bg-light border-0"
-                      name="name"
-                      value={form.name}
-                      onChange={handleChange}
-                      required
-                      placeholder="Enter your name"
-                      style={{ padding: '0.75rem 1rem' }}
-                    />
-                  </div>
 
-                  <div className="mb-4">
-                    <label className="form-label text-muted fw-semibold">Email Address</label>
-                    <input
-                      type="email"
-                      className="form-control form-control-lg bg-light border-0"
-                      name="email"
-                      value={form.email}
-                      onChange={handleChange}
-                      required
-                      placeholder="Enter your email"
-                      style={{ padding: '0.75rem 1rem' }}
-                    />
-                  </div>
+                <div className="mb-4">
+                  <label className="form-label text-muted fw-semibold">Email Address</label>
+                  <input
+                    type="email"
+                    className="form-control form-control-lg bg-light border-0"
+                    name="email"
+                    value={form.email}
+                    onChange={handleChange}
+                    required
+                    placeholder="Enter your email"
+                    style={{ padding: '0.75rem 1rem' }}
+                  />
+                </div>
 
-                  <div className="mb-4">
-                    <label className="form-label text-muted fw-semibold">Password</label>
-                    <input
-                      type="password"
-                      className="form-control form-control-lg bg-light border-0"
-                      name="password"
-                      value={form.password}
-                      onChange={handleChange}
-                      required
-                      placeholder="Create a password"
-                      style={{ padding: '0.75rem 1rem' }}
-                    />
-                  </div>
+                <div className="mb-4">
+                  <label className="form-label text-muted fw-semibold">Password</label>
+                  <input
+                    type="password"
+                    className="form-control form-control-lg bg-light border-0"
+                    name="password"
+                    value={form.password}
+                    onChange={handleChange}
+                    required
+                    placeholder="Create a password"
+                    style={{ padding: '0.75rem 1rem' }}
+                  />
+                </div>
 
-                  <div className="mb-4">
-                    <label className="form-label text-muted fw-semibold">Confirm Password</label>
-                    <input
-                      type="password"
-                      className="form-control form-control-lg bg-light border-0"
-                      name="confirmPassword"
-                      value={form.confirmPassword}
-                      onChange={handleChange}
-                      required
-                      placeholder="Confirm your password"
-                      style={{ padding: '0.75rem 1rem' }}
-                    />
-                  </div>
+                <div className="mb-4">
+                  <label className="form-label text-muted fw-semibold">Confirm Password</label>
+                  <input
+                    type="password"
+                    className="form-control form-control-lg bg-light border-0"
+                    name="confirmPassword"
+                    value={form.confirmPassword}
+                    onChange={handleChange}
+                    required
+                    placeholder="Confirm your password"
+                    style={{ padding: '0.75rem 1rem' }}
+                  />
+                </div>
 
-                  <div className="mb-4">
-                    <label className="form-label text-muted fw-semibold">Account Type</label>
-                    <select
-                      className="form-select form-select-lg bg-light border-0"
-                      name="role"
-                      value={form.role}
-                      onChange={handleChange}
-                      required
-                      style={{ padding: '0.75rem 1rem' }}
+                <div className="mb-4">
+                  <label className="form-label text-muted fw-semibold">Account Type</label>
+                  <select
+                    className="form-select form-select-lg bg-light border-0"
+                    name="role"
+                    value={form.role}
+                    onChange={handleChange}
+                    required
+                    style={{ padding: '0.75rem 1rem' }}
           >
             <option value="">Select Role</option>                      <option value="sender">Sender</option>
                       <option value="handler">Handler</option>
@@ -153,7 +155,7 @@ const RegisterPage = () => {
           </div>
         </div>
       </div>
-    </div>
+    
   );
 };
 

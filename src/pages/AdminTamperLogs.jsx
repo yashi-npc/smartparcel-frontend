@@ -25,39 +25,40 @@ const AdminTamperLogs = () => {
   }, []);
 
   return (
-    <div className="min-h-screen bg-gray-900  p-6">
-      <h1 className="text-3xl font-bold mb-6">Tamper Logs</h1>
-
-      {loading ? (
-        <p>Loading tamper logs...</p>
-      ) : logs.length === 0 ? (
-        <p>No tamper incidents logged.</p>
-      ) : (
-        <div className="overflow-x-auto">
-          <table className="w-full table-auto border-collapse bg-gray-800 rounded-lg shadow-md">
-            <thead>
-              <tr className="bg-gray-700 text-left">
-                <th className="p-3">Tracking ID</th>
-                <th className="p-3">Handler Email</th>
-                <th className="p-3">Reason</th>
-                <th className="p-3">Timestamp</th>
-              </tr>
-            </thead>
-            <tbody>
-              {logs.map((log) => (
-                <tr key={log.id} className="border-t border-gray-600 hover:bg-gray-700 transition">
-                  <td className="p-3">{log.trackingId}</td>
-                  <td className="p-3">{log.handlerEmail}</td>
-                  <td className="p-3">{log.reason}</td>
-                  <td className="p-3">
-                    {new Date(log.timestamp).toLocaleString()}
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      )}
+    <div className="tamperlogs-bg min-h-screen flex flex-col items-center justify-start p-6" style={{background: 'linear-gradient(120deg, #e6f0ff 0%, #b3d1fa 100%)'}}>
+      <div className="card w-full max-w-5xl mx-auto mt-8 mb-8 flex flex-col items-center">
+        <h1 className="card-title text-3xl font-bold mb-6 text-center">Tamper Logs</h1>
+        {loading ? (
+          <div className="text-center text-lg text-blue-700 py-8">Loading tamper logs...</div>
+        ) : logs.length === 0 ? (
+          <div className="text-center text-lg text-blue-700 py-8">No tamper incidents logged.</div>
+        ) : (
+          <div className="w-full flex justify-center">
+            <div className="overflow-x-auto w-full max-w-4xl">
+              <table className="w-full table-auto border-collapse bg-white/95 rounded-xl shadow-lg mx-auto">
+                <thead>
+                  <tr className="bg-blue-100 text-blue-900">
+                    <th className="p-4 font-semibold text-lg text-center">Tracking ID</th>
+                    <th className="p-4 font-semibold text-lg text-center">Handler Email</th>
+                    <th className="p-4 font-semibold text-lg text-center">Reason</th>
+                    <th className="p-4 font-semibold text-lg text-center">Timestamp</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {logs.map((log, idx) => (
+                    <tr key={log.id} className={`border-t ${idx % 2 === 0 ? 'bg-blue-50/60' : 'bg-white/80'} hover:bg-blue-100 transition`}>
+                      <td className="p-4 text-blue-900 font-mono font-semibold text-center">{log.trackingId}</td>
+                      <td className="p-4 text-blue-800 text-center">{log.handlerEmail}</td>
+                      <td className="p-4 text-blue-700 text-center">{log.reason}</td>
+                      <td className="p-4 text-blue-700 text-center">{new Date(log.timestamp).toLocaleString()}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        )}
+      </div>
     </div>
   );
 };

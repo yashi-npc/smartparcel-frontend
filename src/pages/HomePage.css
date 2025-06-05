@@ -1,61 +1,257 @@
-.homepage-container {
+.homepage-bg-nice {
   min-height: 100vh;
+  min-width: 100vw;
+  width: 100vw;
+  height: 100vh;
+  position: fixed;
+  top: 0;
+  left: 0;
+  z-index: 0;
+  background: url('https://images.unsplash.com/photo-1506744038136-46273834b3fb?auto=format&fit=crop&w=1500&q=80') center center/cover no-repeat;
+  /* This Unsplash image is blue-themed and features an airplane, free for use */
+  transition: background 0.5s;
+}
+
+.homepage-overlay {
+  min-height: 100vh;
+  min-width: 100vw;
+  width: 100vw;
+  height: 100vh;
+  background: rgba(24, 49, 83, 0.60); /* blue overlay for readability */
   display: flex;
   align-items: center;
   justify-content: center;
-  background: linear-gradient(120deg, #f0f4ff 60%, #e3f0ff 100%);
+  position: relative;
+  z-index: 1;
 }
+
 .homepage-card {
-  background: #fff;
+  background: rgba(255, 255, 255, 0.85);
   border-radius: 18px;
-  box-shadow: 0 8px 32px rgba(45,91,227,0.10);
+  box-shadow: 0 8px 32px rgba(45,91,227,0.15);
   padding: 3rem 2.5rem 2.5rem 2.5rem;
   text-align: center;
-  max-width: 400px;
+  max-width: 600px; /* wider modal */
   width: 100%;
+  min-width: 340px;
+  margin: 0 1rem;
+  animation: fadeInUp 0.7s cubic-bezier(.39,.575,.56,1.000);
+  backdrop-filter: blur(4px);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
 }
+
+.card.shadow-lg.border-0 {
+  box-shadow: none !important;
+  border: none !important;
+  width: 100%;
+  background: transparent;
+  padding: 0;
+}
+
+.card-body.p-5 {
+  padding: 0 !important;
+}
+
+@keyframes fadeInUp {
+  from { opacity: 0; transform: translateY(40px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
 .homepage-logo {
-  width: 80px;
+  width: 90px;
   margin-bottom: 1.5rem;
+  filter: drop-shadow(0 2px 8px #2d5be355);
 }
+
 .homepage-title {
-  color: #2d5be3;
-  font-size: 2.1rem;
-  font-weight: 700;
+  color: #2563eb;
+  font-size: 2.2rem;
+  font-weight: 800;
   margin-bottom: 0.7rem;
   letter-spacing: 0.5px;
+  text-shadow: 0 2px 8px #2d5be322;
 }
+
 .homepage-desc {
-  color: #7a8bb7;
-  font-size: 1.1rem;
+  color: #4b5e7a;
+  font-size: 1.15rem;
   margin-bottom: 2.2rem;
+  font-weight: 500;
 }
+
 .homepage-btn-group {
   display: flex;
   gap: 1.2rem;
   justify-content: center;
 }
+
 .homepage-btn {
-  background: #2d5be3;
+  background: linear-gradient(90deg, #2563eb 60%, #2d5be3 100%);
   color: #fff;
   border: none;
   border-radius: 8px;
-  font-weight: 600;
+  font-weight: 700;
   font-size: 1.1rem;
   padding: 0.7em 2.2em;
-  box-shadow: 0 2px 8px rgba(45,91,227,0.08);
-  transition: background 0.2s, color 0.2s;
+  box-shadow: 0 2px 8px rgba(45,91,227,0.10);
+  transition: background 0.2s, color 0.2s, box-shadow 0.2s;
   cursor: pointer;
 }
+
 .homepage-btn.secondary {
-  background: #f0f4ff;
-  color: #2d5be3;
+  background: #e3edff;
+  color: #2563eb;
 }
+
 .homepage-btn:hover {
   background: #1a357a;
   color: #fff;
+  box-shadow: 0 4px 16px #2563eb33;
 }
+
 .homepage-btn.secondary:hover {
-  background: #e3f0ff;
-  color: #2d5be3;
+  background: #d0e2ff;
+  color: #2563eb;
+}
+
+.homepage-card input.form-control,
+.homepage-card select.form-select {
+  background: #e6f0ff !important;
+  border: 1.5px solid #b3d1fa !important;
+  color: #1a357a;
+  box-shadow: none;
+  transition: border 0.2s, box-shadow 0.2s;
+}
+
+.homepage-card input.form-control:focus,
+.homepage-card select.form-select:focus {
+  border: 2px solid #2563eb !important;
+  outline: none;
+  box-shadow: 0 0 0 2px #2563eb22;
+  background: #f0f7ff !important;
+}
+
+.homepage-card label.form-label {
+  color: #2563eb;
+}
+
+.card {
+  background: rgba(255,255,255,0.96);
+  border-radius: 18px;
+  box-shadow: 0 8px 32px 0 rgba(45,91,227,0.15);
+  border: 1.5px solid #c7d3f7;
+  transition: box-shadow 0.2s, border 0.2s;
+  padding: 2.2rem 2.2rem 1.7rem 2.2rem;
+  margin-bottom: 2rem;
+  backdrop-filter: blur(6px);
+}
+.card-title, h2, h5 {
+  color: #2563eb;
+  font-weight: 800;
+  letter-spacing: 0.5px;
+  text-shadow: 0 2px 8px #2d5be322;
+}
+.input-group .form-control {
+  border-top-right-radius: 0 !important;
+  border-bottom-right-radius: 0 !important;
+  height: 48px;
+  font-size: 1.08rem;
+  background: #e6f0ff !important;
+  border: 2px solid #b3d1fa !important;
+  color: #1a357a;
+  box-shadow: 0 2px 8px #2563eb11;
+  font-weight: 500;
+  transition: border 0.2s, box-shadow 0.2s;
+}
+.input-group .form-control:focus {
+  border: 2px solid #2563eb !important;
+  outline: none;
+  box-shadow: 0 0 0 2px #2563eb22;
+  background: #f0f7ff !important;
+}
+.input-group .btn.btn-primary {
+  background: linear-gradient(90deg, #2563eb 60%, #2d5be3 100%);
+  color: #fff;
+  border: none;
+  border-top-left-radius: 0;
+  border-bottom-left-radius: 0;
+  border-top-right-radius: 8px;
+  border-bottom-right-radius: 8px;
+  font-weight: 700;
+  font-size: 1.08rem;
+  height: 48px;
+  padding: 0 2em;
+  box-shadow: 0 2px 8px rgba(45,91,227,0.13);
+  transition: background 0.2s, color 0.2s, box-shadow 0.2s;
+  letter-spacing: 0.2px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.input-group .btn.btn-primary:hover {
+  background: #1a357a;
+  color: #fff;
+  box-shadow: 0 4px 16px #2563eb33;
+}
+.btn.btn-warning, .btn.btn-sm.btn-warning {
+  background: linear-gradient(90deg, #7ab8ff 60%, #2563eb 100%);
+  color: #fff;
+  border: none;
+  border-radius: 8px;
+  font-weight: 700;
+  font-size: 1.05rem;
+  padding: 0.6em 1.6em;
+  box-shadow: 0 2px 8px #2563eb22;
+  letter-spacing: 0.1px;
+  transition: background 0.2s, color 0.2s, box-shadow 0.2s;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+.btn.btn-warning:hover, .btn.btn-sm.btn-warning:hover {
+  background: #1a357a;
+  color: #fff;
+  box-shadow: 0 4px 16px #2563eb33;
+}
+.alert-success {
+  background: #e6f0ff;
+  color: #2563eb;
+  border: none;
+  border-radius: 12px;
+  font-weight: 600;
+  font-size: 1.08rem;
+}
+.list-group-item {
+  background: none;
+  border: none;
+  color: #1a357a;
+  font-size: 1.05rem;
+  font-weight: 500;
+  padding: 0.5rem 0;
+}
+.timeline-step {
+  border-color: #2563eb !important;
+}
+.timeline-step .circle {
+  background: linear-gradient(90deg, #2563eb 60%, #2d5be3 100%) !important;
+  border: 2px solid #fff;
+  box-shadow: 0 2px 8px #2563eb22;
+}
+.timeline-step h6 {
+  color: #2563eb;
+  font-weight: 700;
+}
+.timeline-step .text-muted {
+  color: #4b5e7a !important;
+}
+@media (max-width: 700px) {
+  .homepage-card {
+    max-width: 98vw;
+    padding: 2rem 0.5rem;
+  }
+  .card {
+    padding: 1.2rem 0.5rem 1rem 0.5rem;
+  }
 }
