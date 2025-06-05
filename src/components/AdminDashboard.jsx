@@ -181,7 +181,7 @@ function AdminDashboard() {
     filteredParcels.forEach(parcel => {
       if (!mapLocations[parcel.trackingId] && !mapLoading[parcel.trackingId] && !mapError[parcel.trackingId]) {
         setMapLoading(prev => ({ ...prev, [parcel.trackingId]: true }));
-        geocodeAddress(parcel.recipientAddress)
+        geocodeAddress(parcel.currentLocation)
           .then(coords => {
             setMapLocations(prev => ({ ...prev, [parcel.trackingId]: coords }));
             setMapLoading(prev => ({ ...prev, [parcel.trackingId]: false }));
@@ -440,7 +440,7 @@ function AdminDashboard() {
                           >
                             <TileLayer url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" />
                             <Marker position={[mapLocations[parcel.trackingId].lat, mapLocations[parcel.trackingId].lng]}>
-                              <Popup>{parcel.recipientAddress}</Popup>
+                              <Popup>{parcel.currentLocation}</Popup>
                             </Marker>
                           </MapContainer>
                         ) : mapLoading[parcel.trackingId] ? (
@@ -472,7 +472,10 @@ function AdminDashboard() {
                       <ul className="list-group mb-3" style={{ border: 'none', fontSize: '1.05rem' }}>
                         <li className="list-group-item" style={{ border: 'none', padding: '0.5rem 0' }}><span style={{ fontWeight: 600, color: '#2d5be3' }}>Item Name:</span> {selectedParcel.itemName}</li>
                         <li className="list-group-item" style={{ border: 'none', padding: '0.5rem 0' }}><span style={{ fontWeight: 600, color: '#2d5be3' }}>Recipient:</span> {selectedParcel.recipientName}</li>
-                        <li className="list-group-item" style={{ border: 'none', padding: '0.5rem 0' }}><span style={{ fontWeight: 600, color: '#2d5be3' }}>Address:</span> {selectedParcel.recipientAddress}</li>
+                        
+                        <li className="list-group-item" style={{ border: 'none', padding: '0.5rem 0' }}><span style={{ fontWeight: 600, color: '#2d5be3' }}>Pickup Location:</span> {selectedParcel.pickupLocation}</li>
+                        <li className="list-group-item" style={{ border: 'none', padding: '0.5rem 0' }}><span style={{ fontWeight: 600, color: '#2d5be3' }}>Current Location:</span> {selectedParcel.currentLocation}</li>
+                        <li className="list-group-item" style={{ border: 'none', padding: '0.5rem 0' }}><span style={{ fontWeight: 600, color: '#2d5be3' }}>Delivery address:</span> {selectedParcel.recipientAddress}</li>
                         <li className="list-group-item" style={{ border: 'none', padding: '0.5rem 0' }}><span style={{ fontWeight: 600, color: '#2d5be3' }}>Weight:</span> {selectedParcel.weight} kg</li>
                         <li className="list-group-item" style={{ border: 'none', padding: '0.5rem 0' }}><span style={{ fontWeight: 600, color: '#2d5be3' }}>Price:</span> {selectedParcel.price ? `₹${selectedParcel.price}` : 'N/A'}</li>
                         <li className="list-group-item" style={{ border: 'none', padding: '0.5rem 0' }}><span style={{ fontWeight: 600, color: '#2d5be3' }}>Type:</span> {selectedParcel.type}</li>

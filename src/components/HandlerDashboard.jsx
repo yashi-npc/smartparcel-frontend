@@ -225,7 +225,7 @@ function HandlerDashboard() {
       return;
     }
     try {
-      await updateParcelStatus(selectedParcel.trackingId, newStatus, metadata || selectedParcel.metadata);
+      await updateParcelStatus(selectedParcel.trackingId, newStatus, currentLocation, metadata || selectedParcel.metadata);
       setShowEditForm(false);
       setSelectedParcel(null);
       setNewStatus('');
@@ -278,6 +278,18 @@ function HandlerDashboard() {
       const updatedData = await trackParcelById(searchedUpdateParcel.trackingId);
       setSearchedUpdateParcel(updatedData);
       await loadParcels(searchedUpdateParcel.trackingId); // Pass updated ID
+      // Invalidate map location for this parcel so it is re-geocoded
+      setMapLocations(prev => {
+        const newMap = { ...prev };
+        delete newMap[searchedUpdateParcel.trackingId];
+        return newMap;
+      });
+      setMapError(prev => {
+        const newErr = { ...prev };
+        delete newErr[searchedUpdateParcel.trackingId];
+        return newErr;
+      });
+      setMapLoading(prev => ({ ...prev, [searchedUpdateParcel.trackingId]: false }));
       alert('Parcel updated successfully!');
     } catch (error) {
       alert('Failed to update parcel.');
@@ -511,7 +523,9 @@ const SingleMap = ({ coords, address }) => {
                         <li className="list-group-item" style={{ border: 'none', padding: '0.5rem 0' }}><span style={{ fontWeight: 600, color: '#2d5be3' }}>Recipient:</span> {selectedParcel.recipientName}</li>
                         <li className="list-group-item" style={{ border: 'none', padding: '0.5rem 0' }}><span style={{ fontWeight: 600, color: '#2d5be3' }}>Recipient Email:</span> {selectedParcel.recipientEmail}</li>
                         <li className="list-group-item" style={{ border: 'none', padding: '0.5rem 0' }}><span style={{ fontWeight: 600, color: '#2d5be3' }}>Recipient Phone:</span> {selectedParcel.recipientPhone}</li>
-                        <li className="list-group-item" style={{ border: 'none', padding: '0.5rem 0' }}><span style={{ fontWeight: 600, color: '#2d5be3' }}>Address:</span> {selectedParcel.recipientAddress}</li>
+                        <li className="list-group-item" style={{ border: 'none', padding: '0.5rem 0' }}><span style={{ fontWeight: 600, color: '#2d5be3' }}>Pickup Location:</span> {selectedParcel.pickupLocation}</li>
+                        <li className="list-group-item" style={{ border: 'none', padding: '0.5rem 0' }}><span style={{ fontWeight: 600, color: '#2d5be3' }}>Current Location:</span> {selectedParcel.currentLocation}</li>
+                        <li className="list-group-item" style={{ border: 'none', padding: '0.5rem 0' }}><span style={{ fontWeight: 600, color: '#2d5be3' }}>Delivery address:</span> {selectedParcel.recipientAddress}</li>
                         <li className="list-group-item" style={{ border: 'none', padding: '0.5rem 0' }}><span style={{ fontWeight: 600, color: '#2d5be3' }}>Weight:</span> {selectedParcel.weight} kg</li>
                         <li className="list-group-item" style={{ border: 'none', padding: '0.5rem 0' }}><span style={{ fontWeight: 600, color: '#2d5be3' }}>Type:</span> {selectedParcel.type}</li>
                         <li className="list-group-item" style={{ border: 'none', padding: '0.5rem 0' }}><span style={{ fontWeight: 600, color: '#2d5be3' }}>Metadata:</span> {selectedParcel.metadata || 'N/A'}</li>
@@ -551,6 +565,15 @@ const SingleMap = ({ coords, address }) => {
                           <option value="Returned">Returned</option>
                         </select>
                       </div>
+                      <label>Current Location:</label>
+                      <input
+                        type="text"
+                        value={currentLocation}
+                        onChange={(e) => setCurrentLocation(e.target.value)}
+                        className="form-control w-50 mb-3"
+                        placeholder="Enter current location"
+                        required
+                      />
                       <label>Metadata (optional):</label>
                       <input
                         type="text"
@@ -604,7 +627,9 @@ const SingleMap = ({ coords, address }) => {
                             <p><strong>Recipient:</strong> {searchedUpdateParcel.recipientName}</p>
                             <p><strong>Recipient Email:</strong> {searchedUpdateParcel.recipientEmail}</p>
                             <p><strong>Recipient Phone:</strong> {searchedUpdateParcel.recipientPhone}</p>
+                            <p><strong>Pickup Location:</strong> {searchedUpdateParcel.pickupLocation}</p>
                             <p><strong>Address:</strong> {searchedUpdateParcel.recipientAddress}</p>
+                            <p><strong>Current Location:</strong> {searchedUpdateParcel.currentLocation}</p>
                             <p><strong>Type:</strong> {searchedUpdateParcel.type}</p>
                             <p><strong>Price:</strong> {searchedUpdateParcel.price ? `₹${searchedUpdateParcel.price}` : 'N/A'}</p>
                             <p><strong>Expected Delivery:</strong> {searchedUpdateParcel.expectedDeliveryAt ? new Date(searchedUpdateParcel.expectedDeliveryAt).toLocaleString() : 'N/A'}</p>

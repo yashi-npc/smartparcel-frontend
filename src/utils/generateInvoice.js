@@ -9,7 +9,22 @@ export const generateInvoice = (parcel) => {
   const baseAmount = parseFloat(parcel.price || 0);
   // GST 18% (India standard)
   const gst = +(baseAmount * 0.18).toFixed(2);
-  const total = +(baseAmount + gst).toFixed(2);
+
+  // Customs duty if pickup and delivery are not in the same country
+  let customsDuty = 0;
+  let pickupCountry = '';
+  let deliveryCountry = '';
+  if (parcel.pickupLocation && parcel.recipientAddress) {
+    // Extract country from pickupLocation and recipientAddress (assume last word after comma)
+    const pickupParts = parcel.pickupLocation.split(',');
+    const deliveryParts = parcel.recipientAddress.split(',');
+    pickupCountry = pickupParts[pickupParts.length - 1].trim().toLowerCase();
+    deliveryCountry = deliveryParts[deliveryParts.length - 1].trim().toLowerCase();
+    if (pickupCountry && deliveryCountry && pickupCountry !== deliveryCountry) {
+      customsDuty = +(baseAmount * 0.25).toFixed(2); // 25% customs duty (standard for many countries)
+    }
+  }
+  const total = +(baseAmount + gst + customsDuty).toFixed(2);
 
   // Header
   doc.setFontSize(18);
@@ -28,14 +43,19 @@ export const generateInvoice = (parcel) => {
   doc.text(`Created On: ${parcel.createdAt ? new Date(parcel.createdAt).toLocaleDateString() : 'N/A'}`, 20, 96);
 
   // Pricing Table
+  const tableBody = [
+    ['Item Price', baseAmount.toFixed(2)],
+    ['GST (18%)', gst.toFixed(2)]
+  ];
+  if (customsDuty > 0) {
+    tableBody.push(['Customs Duty (25%)', customsDuty.toFixed(2)]);
+  }
+  tableBody.push(['Total Amount', total.toFixed(2)]);
+
   autoTable(doc, {
-    startY: 90,
+    startY: 105,
     head: [['Description', 'Amount (₹)']],
-    body: [
-      ['Item Price', baseAmount.toFixed(2)],
-      ['GST (18%)', gst.toFixed(2)],
-      ['Total Amount', total.toFixed(2)],
-    ],
+    body: tableBody,
   });
 
   // Footer
