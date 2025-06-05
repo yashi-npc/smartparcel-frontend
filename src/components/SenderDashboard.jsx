@@ -10,6 +10,7 @@ function SenderDashboard() {
   const [formData, setFormData] = useState({
     itemName: '',
     recipientName: '',
+    pickupLocation: '',
     recipientAddress: '',
     weight: '',
     price: '',
@@ -104,6 +105,7 @@ function SenderDashboard() {
     const payload = {
       itemName: formData.itemName.trim(),
       recipientName: formData.recipientName.trim(),
+      pickupLocation: formData.pickupLocation.trim(),
       recipientAddress: formData.recipientAddress.trim(),
       type: formData.type.trim(),
       weight: parseFloat(formData.weight),
@@ -128,6 +130,7 @@ function SenderDashboard() {
       setFormData({
         itemName: '',
         recipientName: '',
+        pickupLocation: '',
         recipientAddress: '',
         weight: '',
         price: '',
@@ -252,7 +255,8 @@ function SenderDashboard() {
                         </div>
                         <div className="col-md-4">
                           <div className="mb-2"><strong>Delivery Information</strong></div>
-                          <div>Location: <b>{parcel.recipientAddress}</b></div>
+                          <div>PickupLocation: <b>{parcel.pickupLocation}</b></div>
+                          <div>DeliveryLocation: <b>{parcel.recipientAddress}</b></div>
                           <div>Status: <span className="text-primary">{parcel.status}</span></div>
                           <div>Delivery Start: <b>{new Date(parcel.createdAt).toLocaleDateString()}</b></div>
                           <div>Expected Delivery: <b>{parcel.expectedDeliveryAt ? new Date(parcel.expectedDeliveryAt).toLocaleDateString() : 'N/A'}</b></div>
@@ -289,6 +293,17 @@ function SenderDashboard() {
                       className="form-control"
                       name="recipientName"
                       value={formData.recipientName}
+                      onChange={handleChange}
+                      required
+                    />
+                  </div>
+                  <div className="col-md-6 mb-3">
+                    <label className="form-label">Pickup Location:</label>
+                    <input
+                      type="text"
+                      className="form-control"
+                      name="pickupLocation"
+                      value={formData.pickupLocation}
                       onChange={handleChange}
                       required
                     />
@@ -420,7 +435,8 @@ function SenderDashboard() {
                         <th>Tracking ID</th>
                         <th>Item Name</th>
                         <th>Recipient</th>
-                        <th>Address</th>
+                        <th>Pickup Location</th>
+                        <th>Delivery location</th>
                         <th>Status</th>
                         <th>Created</th>
                         <th>Amount</th>
@@ -437,6 +453,7 @@ function SenderDashboard() {
                             <td>{parcel.trackingId}</td>
                             <td>{parcel.itemName || 'N/A'}</td>
                             <td>{parcel.recipientName}</td>
+                            <td>{parcel.pickupLocation}</td>
                             <td>{parcel.recipientAddress}</td>
                             <td>{parcel.status}</td>
                             <td>{parcel.createdAt ? new Date(parcel.createdAt).toLocaleDateString() : 'N/A'}</td>

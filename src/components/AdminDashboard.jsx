@@ -11,6 +11,9 @@ import 'leaflet/dist/leaflet.css';
 import { Pie, Bar } from 'react-chartjs-2';
 import { Chart, ArcElement, Tooltip, Legend, CategoryScale, LinearScale, BarElement } from 'chart.js';
 
+import AdminTamperLogs from '../pages/AdminTamperLogs';
+import { generateInvoice } from '../utils/generateInvoice';
+
 // Fix for default marker icon issue
 delete L.Icon.Default.prototype._getIconUrl;
 
@@ -278,6 +281,7 @@ function AdminDashboard() {
           <ul>
             <li className={activePage === 'dashboard' ? 'active' : ''} onClick={() => handleSidebarNav('dashboard')}>Delivery Dashboard</li>
             <li className={activePage === 'track' ? 'active' : ''} onClick={() => handleSidebarNav('track')}>Track Parcel</li>
+            <li className={activePage === 'tamperlogs' ? 'active' : ''} onClick={() => handleSidebarNav('tamperlogs')}>Tamper data </li>
             <li className={activePage === 'deliverydata' ? 'active' : ''} onClick={() => handleSidebarNav('deliverydata')}>Delivery Data</li>
             <li className={activePage === 'invoices' ? 'active' : ''} onClick={() => handleSidebarNav('invoices')}>Delivery Invoices</li>
           </ul>
@@ -408,6 +412,7 @@ function AdminDashboard() {
                           <div className="mb-2"><strong>Item Information</strong></div>
                           <div>Item Name: <b>{parcel.itemName || 'N/A'}</b></div>
                           <div>Item Price: <b>{parcel.price ? `₹${parcel.price}` : 'N/A'}</b></div>
+                          <div>Pickup Location: <b>{parcel.pickupLocation || 'N/A'}</b></div>
                           <div>Delivery Code: <b>{parcel.trackingId}</b></div>
                           <div>Metadata: <b>{parcel.metadata}</b></div>
                         </div>
@@ -481,7 +486,7 @@ function AdminDashboard() {
                         <li className="list-group-item" style={{ border: 'none', padding: '0.5rem 0' }}>
                           <span style={{ fontWeight: 600, color: '#2d5be3' }}>Current Status:</span> <span className="badge bg-info text-dark" style={{ fontSize: '1rem', padding: '0.4em 0.8em', borderRadius: '6px', fontWeight: 600 }}>{selectedParcel.status}</span>
                         </li>
-
+                        <li className="list-group-item" style={{ border: 'none', padding: '0.5rem 0' }}><span style={{ fontWeight: 600, color: '#2d5be3' }}>Pickup Location:</span> {selectedParcel.pickupLocation || 'N/A'}</li>
                       </ul>
                       <div className="mb-4 text-center">
                         <QRCodeCanvas value={`http://localhost:3000/parcel/${selectedParcel.trackingId}`} size={160} />
@@ -497,6 +502,7 @@ function AdminDashboard() {
             </>
           )}
           {activePage === 'track' && <TrackParcelPage />}
+          {activePage === 'tamperlogs' && <AdminTamperLogs />}
           {activePage === 'deliverydata' && (
             <div className="delivery-data-tab">
               <h2 className="mb-4">Delivery Data</h2>
@@ -552,7 +558,13 @@ function AdminDashboard() {
                             <td>{parcel.createdAt ? new Date(parcel.createdAt).toLocaleDateString() : 'N/A'}</td>
                             <td>{parcel.amount ? `₹${parcel.amount}` : 'N/A'}</td>
                             <td>
-                              <button className="btn btn-sm btn-primary" disabled>Download Invoice</button>
+                              <button
+                                className="btn btn-sm btn-primary"
+                                onClick={() => generateInvoice(parcel)}
+                              >
+                                Download Invoice
+                              </button>
+
                             </td>
                           </tr>
                         ))

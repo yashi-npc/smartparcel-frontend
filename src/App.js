@@ -10,6 +10,7 @@ import AdminDashboard from './components/AdminDashboard';
 import ParcelDetailsPage from './pages/ParcelDetailsPage';
 import LoginPage from './pages/LoginPage';
 import EnterOtp from './pages/EnterOTP';
+import AdminTamperLogs from './pages/AdminTamperLogs';
 console.log("RegisterPage is:", RegisterPage);
 function App() {
   return (
@@ -23,6 +24,7 @@ function App() {
         <Route path="/admin/dashboard" element={<AdminDashboard />} />
         <Route path="/parcel/:trackingId" element={<ParcelDetailsPage />} />
         <Route path="/enter-otp" element={<EnterOtp />} />
+        <Route path="/admin/tampers" element ={<AdminTamperLogs />} />
       </Routes>
     </Router>
   );  

@@ -454,6 +454,7 @@ const SingleMap = ({ coords, address }) => {
                           <div className="mb-2"><strong>Item Information</strong></div>
                           <div>Item Name: <b>{parcel.itemName || 'N/A'}</b></div>
                           <div>Item Price: <b>{parcel.price ? `₹${parcel.price}` : 'N/A'}</b></div>
+                          <div>Pickup Location: <b>{parcel.pickupLocation || 'N/A'}</b></div>
                           <div>Delivery Code: <b>{parcel.trackingId}</b></div>
                           <div>Metadata: <b>{parcel.metadata}</b></div>
                         </div>
@@ -515,6 +516,7 @@ const SingleMap = ({ coords, address }) => {
                         <li className="list-group-item" style={{ border: 'none', padding: '0.5rem 0' }}><span style={{ fontWeight: 600, color: '#2d5be3' }}>Price:</span> {selectedParcel.price ? `₹${selectedParcel.price}` : 'N/A'}</li>
                         <li className="list-group-item" style={{ border: 'none', padding: '0.5rem 0' }}><span style={{ fontWeight: 600, color: '#2d5be3' }}>Expected Delivery:</span> {selectedParcel.expectedDeliveryAt ? new Date(selectedParcel.expectedDeliveryAt).toLocaleString() : 'N/A'}</li>
                         <li className="list-group-item" style={{ border: 'none', padding: '0.5rem 0' }}><span style={{ fontWeight: 600, color: '#2d5be3' }}>Delivered At:</span> {selectedParcel.deliveryAt ? new Date(selectedParcel.deliveryAt).toLocaleString() : 'Not delivered yet'}</li>
+                        <li className="list-group-item" style={{ border: 'none', padding: '0.5rem 0' }}><span style={{ fontWeight: 600, color: '#2d5be3' }}>Pickup Location:</span> {selectedParcel.pickupLocation || 'N/A'}</li>
                       </ul>
                       <div className="mb-4 text-center">
                         <QRCodeCanvas value={`http://localhost:3000/parcel/${selectedParcel.trackingId}`} size={160} />
@@ -603,6 +605,7 @@ const SingleMap = ({ coords, address }) => {
                             <p><strong>Weight:</strong> {searchedUpdateParcel.weight} kg</p>
                             <p><strong>Created:</strong> {new Date(searchedUpdateParcel.createdAt).toLocaleString()}</p>
                             <p><strong>Current Status:</strong> <span className="badge bg-info text-dark">{searchedUpdateParcel.status}</span></p>
+                            <p><strong>Pickup Location:</strong> {searchedUpdateParcel.pickupLocation || 'N/A'}</p>
                           </div>
                         </div>
 
