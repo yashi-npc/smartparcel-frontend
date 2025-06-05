@@ -45,11 +45,12 @@ function TrackParcelPage() {
             <h5>Parcel Found:</h5>
             <ul className="list-group">
               <li className="list-group-item"><strong>Item Name:</strong> {searchedParcel.itemName}</li>
+              <li className="list-group-item"><strong>Current Location</strong> {searchedParcel.currentLocation}</li>
               <li className="list-group-item"><strong>Pickup Location:</strong> {searchedParcel.pickupLocation}</li>
+              <li className="list-group-item"><strong>Delivery Location:</strong> {searchedParcel.recipientAddress}</li>
               <li className="list-group-item"><strong>Recipient:</strong> {searchedParcel.recipientName}</li>
               <li className="list-group-item"><strong>Recipient Email:</strong> {searchedParcel.recipientEmail}</li>
               <li className="list-group-item"><strong>Recipient Phone:</strong> {searchedParcel.recipientPhone}</li>
-              <li className="list-group-item"><strong>Address:</strong> {searchedParcel.recipientAddress}</li>
               <li className="list-group-item"><strong>Weight:</strong> {searchedParcel.weight} kg</li>
               <li className="list-group-item"><strong>Revenue:</strong> {searchedParcel.price} Rs</li>
               <li className="list-group-item"><strong>Type:</strong> {searchedParcel.type}</li>

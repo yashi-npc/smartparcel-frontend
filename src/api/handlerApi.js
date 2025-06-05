@@ -10,11 +10,12 @@ export const fetchAdminParcels = async () => {
   return response.data;
 };
 
-export const updateParcelStatus = async (trackingId, status, metadata) => {
+export const updateParcelStatus = async (trackingId, status, currentLocation, metadata) => {
   // If status is delivered, set deliveryAt to now (updatedAt will be set by backend)
   const payload = {
     trackingId,
     status,
+    currentLocation,
     metadata,
   };
   if (status && status.toLowerCase() === 'delivered') {

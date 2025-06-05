@@ -26,6 +26,7 @@ function HandlerDashboard() {
   const [selectedParcel, setSelectedParcel] = useState(null);
   const [newStatus, setNewStatus] = useState('');
   const [metadata, setMetadata] = useState('');
+  const [currentLocation, setCurrentLocation] = useState('');
   const [parcels, setParcels] = useState([]);
   const [dashboardSearch, setDashboardSearch] = useState("");
   const [mapLocations, setMapLocations] = useState({});
@@ -191,7 +192,8 @@ function HandlerDashboard() {
     filteredParcels.forEach(parcel => {
       if (!mapLocations[parcel.trackingId] && !mapLoading[parcel.trackingId] && !mapError[parcel.trackingId]) {
         setMapLoading(prev => ({ ...prev, [parcel.trackingId]: true }));
-        geocodeAddress(parcel.recipientAddress)
+        const addressToGeocode = parcel.currentLocation || parcel.recipientAddress;
+        geocodeAddress(addressToGeocode)
           .then(coords => {
             setMapLocations(prev => ({ ...prev, [parcel.trackingId]: coords }));
             setMapLoading(prev => ({ ...prev, [parcel.trackingId]: false }));
@@ -208,6 +210,7 @@ function HandlerDashboard() {
   const handleEditClick = (parcel) => {
     setSelectedParcel(parcel);
     setNewStatus(parcel.status);
+    setCurrentLocation(parcel.currentLocation);
     setMetadata(parcel.metadata || '');
     setShowEditForm(true);
   };
@@ -249,6 +252,7 @@ function HandlerDashboard() {
       setSearchedUpdateParcel(data);
       setNewStatus(data.status);
       setMetadata(data.metadata || '');
+      setCurrentLocation(data.currentLocation);
     } catch (err) {
       const msg = err.response?.data?.message || 'Parcel not found.';
       setSearchUpdateError(msg);
@@ -265,7 +269,12 @@ function HandlerDashboard() {
       return;
     }
     try {
-      await updateParcelStatus(searchedUpdateParcel.trackingId, newStatus, metadata || searchedUpdateParcel.metadata);
+      await updateParcelStatus(
+        searchedUpdateParcel.trackingId,
+        newStatus,
+        currentLocation,
+        metadata || searchedUpdateParcel.metadata
+      );
       const updatedData = await trackParcelById(searchedUpdateParcel.trackingId);
       setSearchedUpdateParcel(updatedData);
       await loadParcels(searchedUpdateParcel.trackingId); // Pass updated ID
@@ -472,7 +481,7 @@ const SingleMap = ({ coords, address }) => {
                           <SingleMap
                             key={parcel.trackingId}
                             coords={mapLocations[parcel.trackingId]}
-                            address={parcel.recipientAddress}
+                            address={parcel.currentLocation || 'Unknown Location'}
                           />
                         ) : mapLoading[parcel.trackingId] ? (
                           <div className="map-placeholder">Loading map...</div>
@@ -483,7 +492,7 @@ const SingleMap = ({ coords, address }) => {
                       <div className="d-flex justify-content-end mt-2">
                         <button className="btn btn-sm btn-warning" onClick={() => handleEditClick(parcel)}>Details</button>
                       </div>
-                    </div>
+                    </div>  
                   ))
                 ) : (
                   <div className="alert alert-info">No parcels found for this filter.</div>
@@ -630,6 +639,17 @@ const SingleMap = ({ coords, address }) => {
                               <option value="Canceled">Canceled</option>
                               <option value="Returned">Returned</option>
                             </select>
+                          </div>
+                          <div className="mb-3">
+                            <label className="form-label">Current Location</label>
+                            <input
+                              type="text"
+                              className="form-control"
+                              value={currentLocation}
+                              onChange={(e) => setCurrentLocation(e.target.value)}
+                              placeholder="Current location of the parcel"
+                              required
+                            />
                           </div>
                           <div className="mb-3">
                             <label className="form-label">Metadata (optional):</label>
