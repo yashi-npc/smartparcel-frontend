@@ -159,7 +159,7 @@ function HandlerDashboard() {
       throw new Error('No address');
     }
 
-    const apiKey = '9a03eb7c0a354cc1812750829b11c377'; // 🔑 Replace with your actual API key
+    const apiKey = ''; // 
     let query = address.trim();
 
     const fetchCoords = async (query) => {
@@ -221,11 +221,13 @@ function HandlerDashboard() {
       setPendingParcel(selectedParcel);
       setPendingStatus(newStatus);
       setPendingMetadata(metadata || selectedParcel.metadata);
+      setCurrentLocation(selectedParcel.recipientAddress);
       setOtpModalOpen(true);
       return;
     }
     try {
-      await updateParcelStatus(selectedParcel.trackingId, newStatus, currentLocation, metadata || selectedParcel.metadata);
+      const finalLocation= newStatus.toLowerCase() === 'delivered' ? selectedParcel.recipientAddress : currentLocation;
+      await updateParcelStatus(selectedParcel.trackingId, newStatus, finalLocation, metadata || selectedParcel.metadata);
       setShowEditForm(false);
       setSelectedParcel(null);
       setNewStatus('');
@@ -263,15 +265,19 @@ function HandlerDashboard() {
     if (newStatus.toLowerCase() === 'delivered') {
       setPendingParcel(searchedUpdateParcel);
       setPendingStatus(newStatus);
+      setCurrentLocation(searchedUpdateParcel.recipientAddress);
       setPendingMetadata(metadata || searchedUpdateParcel.metadata);
       setOtpModalOpen(true);
       return;
     }
     try {
+      const finalLocation = newStatus.toLowerCase() === 'delivered'
+      ? searchedUpdateParcel.recipientAddress
+      : currentLocation;
       await updateParcelStatus(
         searchedUpdateParcel.trackingId,
         newStatus,
-        currentLocation,
+        finalLocation,
         metadata || searchedUpdateParcel.metadata
       );
       const updatedData = await trackParcelById(searchedUpdateParcel.trackingId);

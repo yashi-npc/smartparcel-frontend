@@ -146,7 +146,7 @@ function AdminDashboard() {
       throw new Error('No address');
     }
 
-    const apiKey = '9a03eb7c0a354cc1812750829b11c377'; // 🔑 Replace with your actual API key
+    const apiKey = ''; 
     let query = address.trim();
 
     const fetchCoords = async (query) => {
