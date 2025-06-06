@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import axios from 'axios';
 import './RegisterPage.css';
-import './HomePage.css'; // Reuse homepage styles
+import './HomePage.css';
 
 const RegisterPage = () => {
   const navigate = useNavigate();
@@ -42,120 +42,119 @@ const RegisterPage = () => {
   return (
     <div className="homepage-bg-nice">
       <div className="homepage-overlay">
-        <div className="homepage-card">
-          <img src="/smartparcelicon-light.png" alt="SmartParcel Logo" className="homepage-logo" />
-          <h1 className="homepage-title">Register for ShipWise</h1>
-          <div className="card shadow-lg border-0">
-            <div className="card-body p-5">
-              <div className="text-center mb-4">
-                <h1 className="h3 mb-3 fw-bold" style={{ color: '#2d5be3' }}>ShipWise</h1>
-                <p className="text-muted">Create your account</p>
-              </div>
-              <form onSubmit={handleSubmit}>
-                <div className="mb-4">
-                  <label className="form-label text-muted fw-semibold">Full Name</label>
-                  <input
-                    type="text"
-                    className="form-control form-control-lg bg-light border-0"
-                    name="name"
-                    value={form.name}
-                    onChange={handleChange}
-                    required
-                    placeholder="Enter your name"
-                    style={{ padding: '0.75rem 1rem' }}
-                  />
-                </div>
-
-                <div className="mb-4">
-                  <label className="form-label text-muted fw-semibold">Email Address</label>
-                  <input
-                    type="email"
-                    className="form-control form-control-lg bg-light border-0"
-                    name="email"
-                    value={form.email}
-                    onChange={handleChange}
-                    required
-                    placeholder="Enter your email"
-                    style={{ padding: '0.75rem 1rem' }}
-                  />
-                </div>
-
-                <div className="mb-4">
-                  <label className="form-label text-muted fw-semibold">Password</label>
-                  <input
-                    type="password"
-                    className="form-control form-control-lg bg-light border-0"
-                    name="password"
-                    value={form.password}
-                    onChange={handleChange}
-                    required
-                    placeholder="Create a password"
-                    style={{ padding: '0.75rem 1rem' }}
-                  />
-                </div>
-
-                <div className="mb-4">
-                  <label className="form-label text-muted fw-semibold">Confirm Password</label>
-                  <input
-                    type="password"
-                    className="form-control form-control-lg bg-light border-0"
-                    name="confirmPassword"
-                    value={form.confirmPassword}
-                    onChange={handleChange}
-                    required
-                    placeholder="Confirm your password"
-                    style={{ padding: '0.75rem 1rem' }}
-                  />
-                </div>
-
-                <div className="mb-4">
-                  <label className="form-label text-muted fw-semibold">Account Type</label>
-                  <select
-                    className="form-select form-select-lg bg-light border-0"
-                    name="role"
-                    value={form.role}
-                    onChange={handleChange}
-                    required
-                    style={{ padding: '0.75rem 1rem' }}
-          >
-            <option value="">Select Role</option>                      <option value="sender">Sender</option>
-                      <option value="handler">Handler</option>
-                      <option value="admin">Admin</option>
-                    </select>
-                  </div>
-
-                  <button 
-                    type="submit" 
-                    className="btn btn-primary w-100 py-3 fw-semibold"
-                    style={{ 
-                      backgroundColor: '#2d5be3',
-                      borderColor: '#2d5be3',
-                      fontSize: '1rem'
-                    }}
-                  >
-                    Create Account
-                  </button>
-                </form>
-                <div className="text-center mt-4">
-                  <p className="mb-0">
-                    Already have an account? {' '}
-                    <Link to="/login" style={{ color: '#2d5be3', textDecoration: 'none', fontWeight: '600' }}>
-                      Sign in here
-                    </Link>
-                  </p>
-                  <p className="mb-0">
-                    {' '}
-                    <Link to="/" style={{ color: '#2d5be3', textDecoration: 'none', fontWeight: '600' }}>
-                      Back to homepage
-                    </Link>
-                  </p>
-                </div>
-              </div>
+        <div className="homepage-card" style={{ padding: '2rem 2rem' }}>
+          <img 
+            src="/smartparcelicon-light.png" 
+            alt="SmartParcel Logo" 
+            className="homepage-logo" 
+            style={{ width: '60px', marginBottom: '1rem' }}
+          />
+          <h1 className="homepage-title" style={{ fontSize: '1.75rem', marginBottom: '1.5rem' }}>Register for ShipWise</h1>
+          
+          <form onSubmit={handleSubmit} className="w-100">
+            <div className="mb-2">
+              <label className="form-label text-secondary small mb-1">Full Name</label>
+              <input
+                type="text"
+                className="form-control form-control-sm bg-dark text-white border-secondary"
+                name="name"
+                value={form.name}
+                onChange={handleChange}
+                required
+                placeholder="Enter your name"
+              />
             </div>
-          </div>
+
+            <div className="mb-2">
+              <label className="form-label text-secondary small mb-1">Email Address</label>
+              <input
+                type="email"
+                className="form-control form-control-sm bg-dark text-white border-secondary"
+                name="email"
+                value={form.email}
+                onChange={handleChange}
+                required
+                placeholder="you@example.com"
+              />
+            </div>
+
+            <div className="mb-2">
+              <label className="form-label text-secondary small mb-1">Password</label>
+              <input
+                type="password"
+                className="form-control form-control-sm bg-dark text-white border-secondary"
+                name="password"
+                value={form.password}
+                onChange={handleChange}
+                required
+                placeholder="********"
+              />
+            </div>
+
+            <div className="mb-2">
+              <label className="form-label text-secondary small mb-1">Confirm Password</label>
+              <input
+                type="password"
+                className="form-control form-control-sm bg-dark text-white border-secondary"
+                name="confirmPassword"
+                value={form.confirmPassword}
+                onChange={handleChange}
+                required
+                placeholder="********"
+              />
+            </div>
+
+            <div className="mb-3">
+              <label className="form-label text-secondary small mb-1">Account Type</label>
+              <select
+                className="form-control form-control-sm bg-dark  border-secondary"
+                name="role"
+                value={form.role}
+                onChange={handleChange}
+                required
+              >
+                <option value="">Select Role</option>
+                <option value="sender">Sender</option>
+                <option value="handler">Handler</option>
+                <option value="admin">Admin</option>
+              </select>
+            </div>
+
+            <button 
+              type="submit" 
+              className="btn btn-sm w-100 py-2 fw-bold"
+              style={{
+                backgroundColor: '#2d5be3',
+                border: 'none',
+                color: 'white',
+              }}
+            >
+              Create Account
+            </button>
+
+            <div className="text-center mt-3">
+              <p className="text-secondary small mb-1" style={{ fontSize: '0.85rem' }}>
+                Already have an account?{' '}
+                <Link
+                  to="/login"
+                  className="fw-semibold text-decoration-none"
+                  style={{ color: '#2d5be3' }}
+                >
+                  Sign in here
+                </Link>
+              </p>
+              <Link
+                to="/"
+                className="text-decoration-none fw-semibold small"
+                style={{ color: '#2d5be3', fontSize: '0.85rem' }}
+              >
+                Back to homepage
+              </Link>
+            </div>
+          </form>
         </div>
       </div>
-    
+    </div>
   );
 };
 

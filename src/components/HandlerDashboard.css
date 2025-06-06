@@ -220,13 +220,17 @@ body{
   border: 1.5px dashed #e3e8f0;
 }
 .modal-overlay {
-  position: fixed;
-  top: 0; left: 0; right: 0; bottom: 0;
-  background: rgba(45,91,227,0.10);
-  z-index: 1000;
   display: flex;
-  align-items: center;
   justify-content: center;
+  gap: 20px;
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.5);
+  z-index: 1000;
+  align-items: center;
 }
 .modal-card {
   background: #fff;
@@ -236,6 +240,21 @@ body{
   font-family: 'Segoe UI', Arial, sans-serif;
   width: 500px;
   max-width: 95vw;
+  scrollbar-width: thin;
+  scrollbar-color: #2d5be3 transparent;
+}
+.modal-card::-webkit-scrollbar {
+  width: 6px;
+}
+.modal-card::-webkit-scrollbar-track {
+  background: transparent;
+}
+.modal-card::-webkit-scrollbar-thumb {
+  background: #2d5be3;
+  border-radius: 3px;
+}
+.modal-card::-webkit-scrollbar-thumb:hover {
+  background: #1e3fa0;
 }
 .card-header {
   background: #2d5be3;

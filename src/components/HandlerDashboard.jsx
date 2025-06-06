@@ -38,47 +38,10 @@ function HandlerDashboard() {
   const [searchUpdateId, setSearchUpdateId] = useState('');
   const [searchedUpdateParcel, setSearchedUpdateParcel] = useState(null);
   const [searchUpdateError, setSearchUpdateError] = useState('');
-  const [otpModalOpen, setOtpModalOpen] = useState(false);
-  const [pendingParcel, setPendingParcel] = useState(null);
-  const [pendingStatus, setPendingStatus] = useState('');
-  const [pendingMetadata, setPendingMetadata] = useState('');
 
-  
-  const sendOtp = async (trackingId) => {
-  try {
-    const response = await fetch("http://localhost:8080/parceltrack/send-otp", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({ trackingId }),
-    });
-    const contentType = response.headers.get("content-type");
-    let data;
-    if (contentType && contentType.includes("application/json")) {
-      data = await response.json();
-    } else {
-      // Try to get text (HTML error page or other)
-      const text = await response.text();
-      throw new Error(
-        `Unexpected response from server. Please try again.\n${text.substring(0, 200)}`
-      );
-    }
-    if (!response.ok) {
-      throw new Error(data.error || "Failed to send OTP");
-    }
-    return data;
-  } catch (err) {
-    // Show a user-friendly error
-    alert(
-      err.message.includes("Unexpected token")
-        ? "Server error or CORS issue. Please check your backend and network."
-        : err.message
-    );
-    return null;
-  }
-};
  
+  
+
 
   const today = new Date();
    const isSameDay = (dateA, dateB) => {
@@ -217,16 +180,8 @@ function HandlerDashboard() {
 
   const handleUpdateStatus = async () => {
     if (!newStatus.trim()) return;
-    if (newStatus.toLowerCase() === 'delivered') {
-      setPendingParcel(selectedParcel);
-      setPendingStatus(newStatus);
-      setPendingMetadata(metadata || selectedParcel.metadata);
-      setCurrentLocation(selectedParcel.recipientAddress);
-      setOtpModalOpen(true);
-      return;
-    }
     try {
-      const finalLocation= newStatus.toLowerCase() === 'delivered' ? selectedParcel.recipientAddress : currentLocation;
+      const finalLocation= currentLocation;
       await updateParcelStatus(selectedParcel.trackingId, newStatus, finalLocation, metadata || selectedParcel.metadata);
       setShowEditForm(false);
       setSelectedParcel(null);
@@ -262,18 +217,9 @@ function HandlerDashboard() {
 
   const handleUpdateInPage = async () => {
     if (!newStatus.trim() || !searchedUpdateParcel) return;
-    if (newStatus.toLowerCase() === 'delivered') {
-      setPendingParcel(searchedUpdateParcel);
-      setPendingStatus(newStatus);
-      setCurrentLocation(searchedUpdateParcel.recipientAddress);
-      setPendingMetadata(metadata || searchedUpdateParcel.metadata);
-      setOtpModalOpen(true);
-      return;
-    }
+    
     try {
-      const finalLocation = newStatus.toLowerCase() === 'delivered'
-      ? searchedUpdateParcel.recipientAddress
-      : currentLocation;
+      const finalLocation =  currentLocation;
       await updateParcelStatus(
         searchedUpdateParcel.trackingId,
         newStatus,
@@ -323,19 +269,7 @@ const SingleMap = ({ coords, address }) => {
   );
 };
 
-   useEffect(() => {
-  const triggerOtp = async () => {
-    if (otpModalOpen && pendingParcel) {
-      const res = await sendOtp(pendingParcel.trackingId);
-      if (res) {
-        navigate(`/enter-otp?trackingId=${pendingParcel.trackingId}&action=deliver`);
-        setOtpModalOpen(false);
-        setShowEditForm(false);
-      }
-    }
-  };
-  triggerOtp();
-}, [otpModalOpen, pendingParcel, navigate]);
+   
 
   return (
     <div className="admin-dashboard-layout">
@@ -465,14 +399,16 @@ const SingleMap = ({ coords, address }) => {
                         <span className="delivery-type">{parcel.type === 'Express' ? 'Express Delivery' : 'Regular Delivery'}</span>
                         <span className="delivery-id">#{parcel.trackingId}</span>
                       </div>
-                      <div className="row">
-                        <div className="col-md-4">
+                      <div className="row">                        <div className="col-md-4">
                           <div className="mb-2"><strong>Courier Information</strong></div>
                           <div className="d-flex align-items-center mb-2">
                             <div>
                               <div>{parcel.recipientName}</div>
                               <div className="text-muted small">{parcel.recipientEmail}</div>
                               <div className="text-muted small">{parcel.recipientPhone}</div>
+                              <div className="text-muted small mt-2">
+                                <strong>Sender:</strong> {parcel.senderEmail}
+                              </div>
                             </div>
                           </div>
                         </div>
@@ -514,17 +450,21 @@ const SingleMap = ({ coords, address }) => {
                 ) : (
                   <div className="alert alert-info">No parcels found for this filter.</div>
                 )}
-              </div>
-              {/* Details Modal */}
+              </div>              {/* Details Modal */}              
               {showEditForm && selectedParcel && (
-                <div className="modal-overlay">
-                  <div className="modal-card" style={{ maxHeight: '80vh', overflowY: 'auto', width: '500px', margin: '0 auto', borderRadius: '16px', boxShadow: '0 8px 32px rgba(45,91,227,0.10)', background: '#fff', padding: 0, fontFamily: 'Segoe UI, Arial, sans-serif' }}>
+                <div className="modal-overlay" onClick={(e) => {
+                  if (e.target.className === 'modal-overlay') {
+                    setShowEditForm(false);
+                  }
+                }}>
+                  {/* Details Modal */}
+                  <div className="modal-card" style={{ maxHeight: '80vh', overflowY: 'auto', width: '500px', borderRadius: '16px', boxShadow: '0 8px 32px rgba(45,91,227,0.10)', background: '#fff', padding: 0, fontFamily: 'Segoe UI, Arial, sans-serif', marginRight: '20px' }}>
                     <div className="card-header" style={{ background: '#2d5be3', color: '#fff', borderRadius: '16px 16px 0 0', padding: '1.25rem 1.5rem', fontWeight: 700, fontSize: '1.2rem', letterSpacing: '0.5px', fontFamily: 'inherit' }}>
                       Update Parcel <code style={{ background: 'rgba(255,255,255,0.15)', borderRadius: '4px', padding: '2px 6px', fontWeight: 600, fontSize: '1rem', color: '#fff' }}>{selectedParcel.trackingId}</code>
                     </div>
                     <div className="card-body" style={{ padding: '1.5rem', fontFamily: 'inherit', color: '#222' }}>
-                      <ul className="list-group mb-3" style={{ border: 'none', fontSize: '1.05rem' }}>
-                        <li className="list-group-item" style={{ border: 'none', padding: '0.5rem 0' }}><span style={{ fontWeight: 600, color: '#2d5be3' }}>Item Name:</span> {selectedParcel.itemName}</li>
+                      <ul className="list-group mb-3" style={{ border: 'none', fontSize: '1.05rem' }}>                        <li className="list-group-item" style={{ border: 'none', padding: '0.5rem 0' }}><span style={{ fontWeight: 600, color: '#2d5be3' }}>Item Name:</span> {selectedParcel.itemName}</li>
+                        <li className="list-group-item" style={{ border: 'none', padding: '0.5rem 0' }}><span style={{ fontWeight: 600, color: '#2d5be3' }}>Sender:</span> {selectedParcel.senderEmail}</li>
                         <li className="list-group-item" style={{ border: 'none', padding: '0.5rem 0' }}><span style={{ fontWeight: 600, color: '#2d5be3' }}>Recipient:</span> {selectedParcel.recipientName}</li>
                         <li className="list-group-item" style={{ border: 'none', padding: '0.5rem 0' }}><span style={{ fontWeight: 600, color: '#2d5be3' }}>Recipient Email:</span> {selectedParcel.recipientEmail}</li>
                         <li className="list-group-item" style={{ border: 'none', padding: '0.5rem 0' }}><span style={{ fontWeight: 600, color: '#2d5be3' }}>Recipient Phone:</span> {selectedParcel.recipientPhone}</li>
@@ -545,11 +485,7 @@ const SingleMap = ({ coords, address }) => {
                         <li className="list-group-item" style={{ border: 'none', padding: '0.5rem 0' }}><span style={{ fontWeight: 600, color: '#2d5be3' }}>Expected Delivery:</span> {selectedParcel.expectedDeliveryAt ? new Date(selectedParcel.expectedDeliveryAt).toLocaleString() : 'N/A'}</li>
                         <li className="list-group-item" style={{ border: 'none', padding: '0.5rem 0' }}><span style={{ fontWeight: 600, color: '#2d5be3' }}>Delivered At:</span> {selectedParcel.deliveryAt ? new Date(selectedParcel.deliveryAt).toLocaleString() : 'Not delivered yet'}</li>
                         <li className="list-group-item" style={{ border: 'none', padding: '0.5rem 0' }}><span style={{ fontWeight: 600, color: '#2d5be3' }}>Pickup Location:</span> {selectedParcel.pickupLocation || 'N/A'}</li>
-                      </ul>
-                      <div className="mb-4 text-center">
-                        <QRCodeCanvas value={`http://localhost:3000/parcel/${selectedParcel.trackingId}`} size={160} />
-                        <div className="mt-2"><small style={{ color: '#888', fontFamily: 'inherit' }}>Tracking ID: <code style={{ color: '#2d5be3', fontWeight: 600 }}>{selectedParcel.trackingId}</code></small></div>
-                      </div>
+                      </ul>                      
                       <div className="mb-3">
                         <label className="form-label"><strong>Update Status</strong></label>
                         <select
@@ -565,7 +501,6 @@ const SingleMap = ({ coords, address }) => {
                           <option value="Out for delivery">Out for delivery</option>
                           <option value="On hold">On hold</option>
                           <option value="At local facility">At local facility</option>
-                          <option value="Delivered">Delivered</option>
                           <option value="Canceled">Canceled</option>
                           <option value="Returned">Returned</option>
                         </select>
@@ -585,10 +520,23 @@ const SingleMap = ({ coords, address }) => {
                         value={metadata}
                         onChange={(e) => setMetadata(e.target.value)}
                         className="form-control w-50 mb-3"
-                      />
-                      <div className="d-flex justify-content-end">
+                      />                      <div className="d-flex justify-content-end">
                         <button className="btn btn-success me-2" onClick={handleUpdateStatus}>Update</button>
                         <button className="btn btn-secondary" style={{ borderRadius: '6px', fontWeight: 500, fontFamily: 'inherit', background: '#f0f4ff', color: '#2d5be3', border: 'none' }} onClick={() => setShowEditForm(false)}>Cancel</button>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* QR Code Modal */}
+                  <div className="modal-card" style={{ height: 'fit-content', width: '400px', borderRadius: '16px', boxShadow: '0 8px 32px rgba(45,91,227,0.10)', background: '#fff', padding: 0, fontFamily: 'Segoe UI, Arial, sans-serif' }}>
+                    <div className="card-header" style={{ background: '#2d5be3', color: '#fff', borderRadius: '16px 16px 0 0', padding: '1.25rem 1.5rem', fontWeight: 700, fontSize: '1.2rem', letterSpacing: '0.5px', fontFamily: 'inherit' }}>
+                      QR Code
+                    </div>
+                    <div className="card-body" style={{ padding: '1.5rem', fontFamily: 'inherit', color: '#222', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+                      <div style={{ color: '#2d5be3', marginBottom: '15px', fontSize: '1rem' }}>Scan QR code to mark as delivered</div>
+                      <QRCodeCanvas value={`http://localhost:3000/parcel/${selectedParcel.trackingId}`} size={200} />
+                      <div style={{ marginTop: '15px', color: '#666' }}>
+                        <small>Tracking ID: <code style={{ color: '#2d5be3', fontWeight: 600 }}>{selectedParcel.trackingId}</code></small>
                       </div>
                     </div>
                   </div>
@@ -625,10 +573,10 @@ const SingleMap = ({ coords, address }) => {
                     <div className="card">
                       <div className="card-body">
                         <h5 className="card-title mb-4">Parcel Details</h5>
-                        <div className="row mb-4">
-                          <div className="col-md-6">
+                        <div className="row mb-4">                          <div className="col-md-6">
                             <p><strong>Tracking ID:</strong> {searchedUpdateParcel.trackingId}</p>
                             <p><strong>Item Name:</strong> {searchedUpdateParcel.itemName}</p>
+                            <p><strong>Sender:</strong> {searchedUpdateParcel.senderEmail}</p>
                             <p><strong>Recipient:</strong> {searchedUpdateParcel.recipientName}</p>
                             <p><strong>Recipient Email:</strong> {searchedUpdateParcel.recipientEmail}</p>
                             <p><strong>Recipient Phone:</strong> {searchedUpdateParcel.recipientPhone}</p>                            <p><strong>Pickup Location:</strong> {searchedUpdateParcel.pickupLocation}</p>
@@ -642,8 +590,8 @@ const SingleMap = ({ coords, address }) => {
                             <p><strong>Created:</strong> {new Date(searchedUpdateParcel.createdAt).toLocaleString()}</p>
                             <p><strong>Current Status:</strong> <span className="badge bg-info text-dark">{searchedUpdateParcel.status}</span></p>
                             <p><strong>Pickup Location:</strong> {searchedUpdateParcel.pickupLocation || 'N/A'}</p>
-                              {/* QR Code display */}
-                            <div className="text-center" style={{ marginLeft: -405, marginTop: 110 }}>
+                              {/* QR Code display */}                            <div className="text-center" style={{ marginLeft: -300, marginTop: 110 }}>
+                              <div style={{ fontSize: '18px',color: '#2d5be3', marginBottom: '10px', marginLeft:'94px' }}>Scan QR code to mark as delivered</div>
                               <QRCodeCanvas value={`http://localhost:3000/parcel/${searchedUpdateParcel.trackingId}`} size={170} />
                               <div style={{ color: '#2d5be3', fontWeight: 600, marginTop: 8 }}>Tracking ID: <code>{searchedUpdateParcel.trackingId}</code></div>
                             </div>
@@ -667,7 +615,6 @@ const SingleMap = ({ coords, address }) => {
                               <option value="Out for delivery">Out for delivery</option>
                               <option value="On hold">On hold</option>
                               <option value="At local facility">At local facility</option>
-                              <option value="Delivered">Delivered</option>
                               <option value="Canceled">Canceled</option>
                               <option value="Returned">Returned</option>
                             </select>

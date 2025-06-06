@@ -413,13 +413,16 @@ function AdminDashboard() {
                         <span className="delivery-type">{parcel.type === 'Express' ? 'Express Delivery' : 'Regular Delivery'}</span>
                         <span className="delivery-id">#{parcel.trackingId}</span>
                       </div>
-                      <div className="row">
-                        <div className="col-md-4">
+                      <div className="row">                          <div className="col-md-4">
                           <div className="mb-2"><strong>Courier Information</strong></div>
                           <div className="d-flex align-items-center mb-2">
                             <div>
                               <div>{parcel.recipientName}</div>
-                              <div className="text-muted small">EMP-3321</div>
+                              <div className="text-muted small">{parcel.recipientEmail}</div>
+                              <div className="text-muted small">{parcel.recipientPhone}</div>
+                              <div className="text-muted small mt-2">
+                                <strong>Sender:</strong> {parcel.senderEmail}
+                              </div>
                             </div>
                           </div>
                         </div>
@@ -475,47 +478,99 @@ function AdminDashboard() {
                 ) : (
                   <div className="alert alert-info">No parcels found for this filter.</div>
                 )}
-              </div>
-              {/* Details Modal (unchanged) */}
-              {showEditForm && selectedParcel && (
-                <div className="modal-overlay">
-                  <div className="modal-card" style={{ maxHeight: '80vh', overflowY: 'auto', width: '500px', margin: '0 auto', borderRadius: '16px', boxShadow: '0 8px 32px rgba(45,91,227,0.10)', background: '#fff', padding: 0, fontFamily: 'Segoe UI, Arial, sans-serif' }}>
-                    <div className="card-header" style={{ background: '#2d5be3', color: '#fff', borderRadius: '16px 16px 0 0', padding: '1.25rem 1.5rem', fontWeight: 700, fontSize: '1.2rem', letterSpacing: '0.5px', fontFamily: 'inherit' }}>
-                      Details <code style={{ background: 'rgba(255,255,255,0.15)', borderRadius: '4px', padding: '2px 6px', fontWeight: 600, fontSize: '1rem', color: '#fff' }}>{selectedParcel.trackingId}</code>
-                    </div>
-                    <div className="card-body" style={{ padding: '1.5rem', fontFamily: 'inherit', color: '#222' }}>
-                      <ul className="list-group mb-3" style={{ border: 'none', fontSize: '1.05rem' }}>
-                        <li className="list-group-item" style={{ border: 'none', padding: '0.5rem 0' }}><span style={{ fontWeight: 600, color: '#2d5be3' }}>Item Name:</span> {selectedParcel.itemName}</li>
-                        <li className="list-group-item" style={{ border: 'none', padding: '0.5rem 0' }}><span style={{ fontWeight: 600, color: '#2d5be3' }}>Recipient:</span> {selectedParcel.recipientName}</li>
-                        
-                        <li className="list-group-item" style={{ border: 'none', padding: '0.5rem 0' }}><span style={{ fontWeight: 600, color: '#2d5be3' }}>Pickup Location:</span> {selectedParcel.pickupLocation}</li>
-                        <li className="list-group-item" style={{ border: 'none', padding: '0.5rem 0' }}><span style={{ fontWeight: 600, color: '#2d5be3' }}>Current Location:</span> {selectedParcel.currentLocation}</li>
-                        <li className="list-group-item" style={{ border: 'none', padding: '0.5rem 0' }}><span style={{ fontWeight: 600, color: '#2d5be3' }}>Delivery address:</span> {selectedParcel.recipientAddress}</li>
-                        <li className="list-group-item" style={{ border: 'none', padding: '0.5rem 0' }}><span style={{ fontWeight: 600, color: '#2d5be3' }}>Weight:</span> {selectedParcel.weight} kg</li>
-                        <li className="list-group-item" style={{ border: 'none', padding: '0.5rem 0' }}><span style={{ fontWeight: 600, color: '#2d5be3' }}>Price:</span> {selectedParcel.price ? `₹${selectedParcel.price}` : 'N/A'}</li>
-                        <li className="list-group-item" style={{ border: 'none', padding: '0.5rem 0' }}><span style={{ fontWeight: 600, color: '#2d5be3' }}>Type:</span> {selectedParcel.type}</li>
-                        <li className="list-group-item" style={{ border: 'none', padding: '0.5rem 0' }}><span style={{ fontWeight: 600, color: '#2d5be3' }}>Metadata:</span> {selectedParcel.metadata || 'N/A'}</li>
-                        <li className="list-group-item" style={{ border: 'none', padding: '0.5rem 0' }}><span style={{ fontWeight: 600, color: '#2d5be3' }}>Created At:</span> {new Date(selectedParcel.createdAt).toLocaleString()}</li>
-                        {selectedParcel.updatedAt && (
-                          <li className="list-group-item" style={{ border: 'none', padding: '0.5rem 0' }}><span style={{ fontWeight: 600, color: '#2d5be3' }}>Last Updated:</span> {new Date(selectedParcel.updatedAt).toLocaleString()}</li>
-                        )}
-                        <li className="list-group-item" style={{ border: 'none', padding: '0.5rem 0' }}><span style={{ fontWeight: 600, color: '#2d5be3' }}>Expected Delivery:</span> {selectedParcel.expectedDeliveryAt ? new Date(selectedParcel.expectedDeliveryAt).toLocaleString() : 'N/A'}</li>
-                        <li className="list-group-item" style={{ border: 'none', padding: '0.5rem 0' }}><span style={{ fontWeight: 600, color: '#2d5be3' }}>Delivered At:</span> {selectedParcel.deliveryAt ? new Date(selectedParcel.deliveryAt).toLocaleString() : 'Not delivered yet'}</li>
-                        <li className="list-group-item" style={{ border: 'none', padding: '0.5rem 0' }}>
-                          <span style={{ fontWeight: 600, color: '#2d5be3' }}>Current Status:</span> <span className="badge bg-info text-dark" style={{ fontSize: '1rem', padding: '0.4em 0.8em', borderRadius: '6px', fontWeight: 600 }}>{selectedParcel.status}</span>
-                        </li>
-                        <li className="list-group-item" style={{ border: 'none', padding: '0.5rem 0' }}><span style={{ fontWeight: 600, color: '#2d5be3' }}>Pickup Location:</span> {selectedParcel.pickupLocation || 'N/A'}</li>
-                      </ul>
-                      <div className="mb-4 text-center">
-                        <QRCodeCanvas value={`http://localhost:3000/parcel/${selectedParcel.trackingId}`} size={160} />
-                        <div className="mt-2"><small style={{ color: '#888', fontFamily: 'inherit' }}>Tracking ID: <code style={{ color: '#2d5be3', fontWeight: 600 }}>{selectedParcel.trackingId}</code></small></div>
+              </div>               {/* Details Modal */}              
+               {showEditForm && selectedParcel && (
+                  <div 
+                    className="modal-overlay" 
+                    style={{ 
+                      display: 'flex', 
+                      justifyContent: 'center', 
+                      gap: '20px',
+                      position: 'fixed',
+                      top: 0,
+                      left: 0,
+                      right: 0,
+                      bottom: 0,
+                      backgroundColor: 'rgba(0, 0, 0, 0.5)',
+                      zIndex: 1000,
+                      alignItems: 'center'
+                    }}
+                    onClick={(e) => {
+                      if (e.target.className === 'modal-overlay') {
+                        setShowEditForm(false);
+                      }
+                    }}
+                  >
+                    {/* Details Modal */}
+                    <div className="modal-card" style={{ 
+                      maxHeight: '80vh', 
+                      overflowY: 'auto', 
+                      width: '500px', 
+                      borderRadius: '16px', 
+                      boxShadow: '0 8px 32px rgba(45,91,227,0.10)', 
+                      background: '#fff', 
+                      padding: 0, 
+                      fontFamily: 'Segoe UI, Arial, sans-serif', 
+                      marginRight: '20px',
+                      scrollbarWidth: 'thin',
+                      scrollbarColor: '#2d5be3 transparent',
+                      '&::-webkit-scrollbar': {
+                        width: '6px',
+                      },
+                      '&::-webkit-scrollbar-track': {
+                        background: 'transparent',
+                      },
+                      '&::-webkit-scrollbar-thumb': {
+                        background: '#2d5be3',
+                        borderRadius: '3px',
+                      }
+                    }}>
+                      <div className="card-header" style={{ background: '#2d5be3', color: '#fff', borderRadius: '16px 16px 0 0', padding: '1.25rem 1.5rem', fontWeight: 700, fontSize: '1.2rem', letterSpacing: '0.5px', fontFamily: 'inherit' }}>
+                        Update Parcel <code style={{ background: 'rgba(255,255,255,0.15)', borderRadius: '4px', padding: '2px 6px', fontWeight: 600, fontSize: '1rem', color: '#fff' }}>{selectedParcel.trackingId}</code>
                       </div>
-                      <div className="d-flex justify-content-end">
-                        <button className="btn btn-secondary" style={{ borderRadius: '6px', fontWeight: 500, fontFamily: 'inherit', background: '#f0f4ff', color: '#2d5be3', border: 'none' }} onClick={() => setShowEditForm(false)}>Close</button>
+                      <div className="card-body" style={{ padding: '1.5rem', fontFamily: 'inherit', color: '#222' }}>
+                        <ul className="list-group mb-3" style={{ border: 'none', fontSize: '1.05rem' }}>                        <li className="list-group-item" style={{ border: 'none', padding: '0.5rem 0' }}><span style={{ fontWeight: 600, color: '#2d5be3' }}>Item Name:</span> {selectedParcel.itemName}</li>
+                          <li className="list-group-item" style={{ border: 'none', padding: '0.5rem 0' }}><span style={{ fontWeight: 600, color: '#2d5be3' }}>Sender:</span> {selectedParcel.senderEmail}</li>
+                          <li className="list-group-item" style={{ border: 'none', padding: '0.5rem 0' }}><span style={{ fontWeight: 600, color: '#2d5be3' }}>Recipient:</span> {selectedParcel.recipientName}</li>
+                          <li className="list-group-item" style={{ border: 'none', padding: '0.5rem 0' }}><span style={{ fontWeight: 600, color: '#2d5be3' }}>Recipient Email:</span> {selectedParcel.recipientEmail}</li>
+                          <li className="list-group-item" style={{ border: 'none', padding: '0.5rem 0' }}><span style={{ fontWeight: 600, color: '#2d5be3' }}>Recipient Phone:</span> {selectedParcel.recipientPhone}</li>
+                          <li className="list-group-item" style={{ border: 'none', padding: '0.5rem 0' }}><span style={{ fontWeight: 600, color: '#2d5be3' }}>Pickup Location:</span> {selectedParcel.pickupLocation}</li>
+                          <li className="list-group-item" style={{ border: 'none', padding: '0.5rem 0' }}><span style={{ fontWeight: 600, color: '#2d5be3' }}>Current Location:</span> {selectedParcel.currentLocation}</li>
+                          <li className="list-group-item" style={{ border: 'none', padding: '0.5rem 0' }}><span style={{ fontWeight: 600, color: '#2d5be3' }}>Delivery address:</span> {selectedParcel.recipientAddress}</li>
+                          <li className="list-group-item" style={{ border: 'none', padding: '0.5rem 0' }}><span style={{ fontWeight: 600, color: '#2d5be3' }}>Weight:</span> {selectedParcel.weight} kg</li>
+                          <li className="list-group-item" style={{ border: 'none', padding: '0.5rem 0' }}><span style={{ fontWeight: 600, color: '#2d5be3' }}>Type:</span> {selectedParcel.type}</li>
+                          <li className="list-group-item" style={{ border: 'none', padding: '0.5rem 0' }}><span style={{ fontWeight: 600, color: '#2d5be3' }}>Metadata:</span> {selectedParcel.metadata || 'N/A'}</li>
+                          <li className="list-group-item" style={{ border: 'none', padding: '0.5rem 0' }}><span style={{ fontWeight: 600, color: '#2d5be3' }}>Created At:</span> {new Date(selectedParcel.createdAt).toLocaleString()}</li>
+                          {selectedParcel.updatedAt && (
+                            <li className="list-group-item" style={{ border: 'none', padding: '0.5rem 0' }}><span style={{ fontWeight: 600, color: '#2d5be3' }}>Last Updated:</span> {new Date(selectedParcel.updatedAt).toLocaleString()}</li>
+                          )}
+                          <li className="list-group-item" style={{ border: 'none', padding: '0.5rem 0' }}>
+                            <span style={{ fontWeight: 600, color: '#2d5be3' }}>Current Status:</span> <span className="badge bg-info text-dark" style={{ fontSize: '1rem', padding: '0.4em 0.8em', borderRadius: '6px', fontWeight: 600 }}>{selectedParcel.status}</span>
+                          </li>
+                          <li className="list-group-item" style={{ border: 'none', padding: '0.5rem 0' }}><span style={{ fontWeight: 600, color: '#2d5be3' }}>Price:</span> {selectedParcel.price ? `₹${selectedParcel.price}` : 'N/A'}</li>
+                          <li className="list-group-item" style={{ border: 'none', padding: '0.5rem 0' }}><span style={{ fontWeight: 600, color: '#2d5be3' }}>Expected Delivery:</span> {selectedParcel.expectedDeliveryAt ? new Date(selectedParcel.expectedDeliveryAt).toLocaleString() : 'N/A'}</li>
+                          <li className="list-group-item" style={{ border: 'none', padding: '0.5rem 0' }}><span style={{ fontWeight: 600, color: '#2d5be3' }}>Delivered At:</span> {selectedParcel.deliveryAt ? new Date(selectedParcel.deliveryAt).toLocaleString() : 'Not delivered yet'}</li>
+                          <li className="list-group-item" style={{ border: 'none', padding: '0.5rem 0' }}><span style={{ fontWeight: 600, color: '#2d5be3' }}>Pickup Location:</span> {selectedParcel.pickupLocation || 'N/A'}</li>
+                        </ul>     
+                        <button className="btn btn-secondary" style={{ borderRadius: '6px', fontWeight: 500, fontFamily: 'inherit', background: '#f0f4ff', color: '#2d5be3', border: 'none' }} onClick={() => setShowEditForm(false)}>Close</button>                 
+                
+                      </div>
+                    </div>
+  
+                    {/* QR Code Modal */}
+                    <div className="modal-card" style={{ height: 'fit-content', width: '400px', borderRadius: '16px', boxShadow: '0 8px 32px rgba(45,91,227,0.10)', background: '#fff', padding: 0, fontFamily: 'Segoe UI, Arial, sans-serif' }}>
+                      <div className="card-header" style={{ background: '#2d5be3', color: '#fff', borderRadius: '16px 16px 0 0', padding: '1.25rem 1.5rem', fontWeight: 700, fontSize: '1.2rem', letterSpacing: '0.5px', fontFamily: 'inherit' }}>
+                        QR Code
+                      </div>
+                      <div className="card-body" style={{ padding: '1.5rem', fontFamily: 'inherit', color: '#222', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+                        
+                        <QRCodeCanvas value={`http://localhost:3000/parcel/${selectedParcel.trackingId}`} size={200} />
+                        <div style={{ marginTop: '15px', color: '#666' }}>
+                          <small>Tracking ID: <code style={{ color: '#2d5be3', fontWeight: 600 }}>{selectedParcel.trackingId}</code></small>
+                        </div>
                       </div>
                     </div>
                   </div>
-                </div>
               )}
             </>
           )}

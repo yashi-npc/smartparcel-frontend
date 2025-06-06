@@ -356,6 +356,21 @@
   border-radius: 12px;
   box-shadow: 0 8px 32px rgba(0,0,0,0.18);
   padding: 0;
+  scrollbar-width: thin;
+  scrollbar-color: #2d5be3 transparent;
+}
+.modal-card::-webkit-scrollbar {
+  width: 6px;
+}
+.modal-card::-webkit-scrollbar-track {
+  background: transparent;
+}
+.modal-card::-webkit-scrollbar-thumb {
+  background: #2d5be3;
+  border-radius: 3px;
+}
+.modal-card::-webkit-scrollbar-thumb:hover {
+  background: #1e3fa0;
 }
 .card-header.bg-primary {
   border-radius: 12px 12px 0 0;
