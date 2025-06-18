@@ -28,3 +28,13 @@ export const trackParcelById = async (trackingId) => {
   const response = await axiosInstance.get(`/api/parcel/track?trackingId=${trackingId}`);
   return response.data;
 };
+
+export const reportTamper = async (trackingId, issueType, comments) => {
+  const response = await axiosInstance.post('/api/handler/report-tamper', {
+    trackingId,
+    issueType,
+    comments,
+  });
+  return response.data;
+};
+

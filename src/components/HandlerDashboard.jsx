@@ -8,7 +8,7 @@ import TrackParcelPage from '../pages/TrackParcelPage';
 import L from 'leaflet';
 import { MapContainer, TileLayer, Marker, Popup } from 'react-leaflet';
 import 'leaflet/dist/leaflet.css';
-
+import { reportTamper } from '../api/handlerApi';
 import markerIcon2x from 'leaflet/dist/images/marker-icon-2x.png';
 import markerIcon from 'leaflet/dist/images/marker-icon.png';
 import markerShadow from 'leaflet/dist/images/marker-shadow.png';
@@ -38,10 +38,61 @@ function HandlerDashboard() {
   const [searchUpdateId, setSearchUpdateId] = useState('');
   const [searchedUpdateParcel, setSearchedUpdateParcel] = useState(null);
   const [searchUpdateError, setSearchUpdateError] = useState('');
+  const [showTamperModal, setShowTamperModal] = useState(false);
+  const [tamperIssueType, setTamperIssueType] = useState('');
+  const [tamperComments, setTamperComments] = useState('');
+  const [selectedParcelForTamper, setSelectedParcelForTamper] = useState(null);
 
  
-  
+  const handleReportTamper = async (trackingId, issueType, comments) => {
+    try {
+      const response = await reportTamper(trackingId, issueType, comments);
+      alert('Tampering reported successfully!');
+      return response;
+    } catch (error) {
+      console.error('Tamper report error:', error);
+      const errorMessage = error.response?.data?.message || error.message || 'Failed to report tampering.';
+      alert(errorMessage);
+      throw error;
+    }
+  };
 
+  // Issue type options for the tamper report
+  const tamperIssueTypes = [
+    'Package Damage',
+    'Seal Broken',
+    'Contents Missing',
+    'Unauthorized Opening',
+    'Other'
+  ];
+
+  const handleTamperClick = (parcel) => {
+    setSelectedParcelForTamper(parcel);
+    setTamperIssueType('');
+    setTamperComments('');
+    setShowTamperModal(true);
+  };
+
+  const handleSubmitTamperReport = async () => {
+    if (!tamperIssueType || !tamperComments) {
+      alert('Please fill in all fields');
+      return;
+    }
+
+    try {
+      await handleReportTamper(selectedParcelForTamper.trackingId, tamperIssueType, tamperComments);
+      // Reload parcels to get updated data
+      await loadParcels();
+      setShowTamperModal(false);
+      setSelectedParcelForTamper(null);
+      setTamperIssueType('');
+      setTamperComments('');
+    } catch (error) {
+      console.error('Failed to submit tamper report:', error);
+      const errorMessage = error.response?.data?.message || error.message || 'Failed to submit tamper report. Please try again.';
+      alert(errorMessage);
+    }
+  };
 
   const today = new Date();
    const isSameDay = (dateA, dateB) => {
@@ -122,7 +173,7 @@ function HandlerDashboard() {
       throw new Error('No address');
     }
 
-    const apiKey = ''; // 
+    const apiKey = '9a03eb7c0a354cc1812750829b11c377'; // 
     let query = address.trim();
 
     const fetchCoords = async (query) => {
@@ -441,9 +492,9 @@ const SingleMap = ({ coords, address }) => {
                         ) : (
                           <div className="map-placeholder text-danger">Map unavailable</div>
                         )}
-                      </div>
-                      <div className="d-flex justify-content-end mt-2">
+                      </div>                      <div className="d-flex justify-content-end mt-2 gap-2">
                         <button className="btn btn-sm btn-warning" onClick={() => handleEditClick(parcel)}>Details</button>
+                        <button className="btn btn-sm btn-danger" onClick={() => handleTamperClick(parcel)}>Report Tamper</button>
                       </div>
                     </div>  
                   ))
@@ -542,6 +593,113 @@ const SingleMap = ({ coords, address }) => {
                   </div>
                 </div>
               )}
+
+              {/* Tamper Report Modal */}
+              {showTamperModal && selectedParcelForTamper && (
+                <div 
+                  className="modal-overlay" 
+                  onClick={(e) => {
+                    if (e.target.className === 'modal-overlay') {
+                      setShowTamperModal(false);
+                    }
+                  }}
+                >
+                  <div className="modal-card" style={{ 
+                    width: '500px',
+                    maxHeight: '80vh',
+                    overflowY: 'auto',
+                    borderRadius: '16px',
+                    boxShadow: '0 8px 32px rgba(220,53,69,0.15)',
+                    background: '#fff',
+                    padding: 0,
+                    fontFamily: 'Segoe UI, Arial, sans-serif',
+                    scrollbarWidth: 'thin',
+                    scrollbarColor: '#dc3545 transparent'
+                  }}>
+                    <div className="card-header" style={{ 
+                      background: '#dc3545',
+                      color: '#fff',
+                      borderRadius: '16px 16px 0 0',
+                      padding: '1.25rem 1.5rem',
+                      fontWeight: 700,
+                      fontSize: '1.2rem',
+                      letterSpacing: '0.5px'
+                    }}>
+                      Report Tampering <code style={{ 
+                        background: 'rgba(255,255,255,0.15)',
+                        borderRadius: '4px',
+                        padding: '2px 6px',
+                        fontWeight: 600,
+                        fontSize: '1rem',
+                        color: '#fff'
+                      }}>{selectedParcelForTamper.trackingId}</code>
+                    </div>
+                    <div className="card-body" style={{ padding: '1.5rem' }}>
+                      <div className="mb-4">
+                        <p className="mb-3" style={{ color: '#666' }}>
+                          Please provide details about any tampering or damage observed with this parcel. 
+                          False reports may result in disciplinary action.
+                        </p>
+                        <div className="alert alert-warning" style={{ fontSize: '0.9rem' }}>
+                          <i className="fas fa-exclamation-triangle me-2"></i>
+                          Submit accurate reports only. All tamper reports are logged and investigated.
+                        </div>
+                      </div>
+                      
+                      <div className="mb-3">
+                        <label className="form-label fw-bold">Issue Type</label>
+                        <select
+                          className="form-select"
+                          value={tamperIssueType}
+                          onChange={(e) => setTamperIssueType(e.target.value)}
+                        >
+                          <option value="">-- Select Issue Type --</option>
+                          {tamperIssueTypes.map((type) => (
+                            <option key={type} value={type}>{type}</option>
+                          ))}
+                        </select>
+                      </div>
+                      
+                      <div className="mb-4">
+                        <label className="form-label fw-bold">Detailed Description</label>
+                        <textarea
+                          className="form-control"
+                          value={tamperComments}
+                          onChange={(e) => setTamperComments(e.target.value)}
+                          rows="4"
+                          placeholder="Please provide a detailed description of the tampering issue..."
+                          style={{ resize: 'vertical', minHeight: '120px' }}
+                        ></textarea>
+                      </div>
+
+                      <div className="d-flex justify-content-end gap-2">
+                        <button 
+                          className="btn btn-danger px-4"
+                          onClick={handleSubmitTamperReport}
+                          disabled={!tamperIssueType || !tamperComments}
+                        >
+                          Submit Report
+                        </button>
+                        <button 
+                          className="btn btn-light" 
+                          style={{ 
+                            borderRadius: '6px',
+                            fontWeight: 500,
+                            background: '#f0f4ff',
+                            color: '#2d5be3',
+                            border: 'none'
+                          }} 
+                          onClick={() => setShowTamperModal(false)}
+                        >
+                          Cancel
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* Existing modals continue... */}
             </>
           )}
 

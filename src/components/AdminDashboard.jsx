@@ -7,9 +7,11 @@ import './AdminDashboard.css';
 import TrackParcelPage from '../pages/TrackParcelPage';
 import { MapContainer, TileLayer, Marker, Popup } from 'react-leaflet';
 import L from 'leaflet';
+import axios from 'axios';
 import 'leaflet/dist/leaflet.css';
-import { Pie, Bar } from 'react-chartjs-2';
-import { Chart, ArcElement, Tooltip, Legend, CategoryScale, LinearScale, BarElement } from 'chart.js';
+import { Pie, Bar, Line, Doughnut } from 'react-chartjs-2';
+import { Chart as ChartJS, CategoryScale, LinearScale, PointElement, LineElement, 
+  ArcElement, BarElement, Title, Tooltip, Legend, Filler } from 'chart.js';
 
 import AdminTamperLogs from '../pages/AdminTamperLogs';
 import { generateInvoice } from '../utils/generateInvoice';
@@ -23,7 +25,8 @@ L.Icon.Default.mergeOptions({
   shadowUrl: require('leaflet/dist/images/marker-shadow.png'),
 });
 
-Chart.register(ArcElement, Tooltip, Legend, CategoryScale, LinearScale, BarElement);
+ChartJS.register(CategoryScale, LinearScale, PointElement, LineElement, 
+  ArcElement, BarElement, Title, Tooltip, Legend, Filler);
 
 function AdminDashboard() {
   const [showEditForm, setShowEditForm] = useState(false);
@@ -39,6 +42,7 @@ function AdminDashboard() {
   const [mapLocations, setMapLocations] = useState({}); // { [trackingId]: { lat, lng } }
   const [mapLoading, setMapLoading] = useState({}); // { [trackingId]: true/false }
   const [mapError, setMapError] = useState({}); // { [trackingId]: errorMsg }
+  const [tamperLogs, setTamperLogs] = useState([]);
   const navigate = useNavigate();
 
   const handleEditClick = (parcel) => {
@@ -146,7 +150,7 @@ function AdminDashboard() {
       throw new Error('No address');
     }
 
-    const apiKey = ''; 
+    const apiKey = '9a03eb7c0a354cc1812750829b11c377'; 
     let query = address.trim();
 
     const fetchCoords = async (query) => {
@@ -283,6 +287,120 @@ function AdminDashboard() {
     scales: {
       y: { beginAtZero: true, ticks: { stepSize: 1 } },
     },
+  };
+
+  // Fetch tamper logs
+  useEffect(() => {
+    const fetchTamperLogs = async () => {
+      try {
+        const res = await axios.get('http://localhost:8080/parceltrack/api/admin/tampers', {
+          headers: {
+            Authorization: `Bearer ${localStorage.getItem('token')}`
+          }
+        });
+        setTamperLogs(res.data);
+      } catch (err) {
+        console.error('Failed to fetch tamper logs:', err);
+      }
+    };
+    fetchTamperLogs();
+  }, []);
+
+  // Prepare tamper analytics data
+  const getTamperAnalytics = () => {
+    // Get last 7 days
+    const last7Days = [...Array(7)].map((_, i) => {
+      const d = new Date();
+      d.setDate(d.getDate() - (6 - i));
+      return d;
+    });
+
+    // Count tampers per day
+    const tampersByDay = last7Days.map(day => ({
+      date: day,
+      manual: tamperLogs.filter(log => 
+        log.type === 'manual' && 
+        isSameDayLocal(log.timestamp, day)
+      ).length,
+      automated: tamperLogs.filter(log => 
+        log.type !== 'manual' && 
+        isSameDayLocal(log.timestamp, day)
+      ).length
+    }));
+
+    // Count tamper types
+    const tamperTypes = tamperLogs.reduce((acc, log) => {
+      const type = log.type === 'manual' ? log.issueType : log.reason;
+      acc[type] = (acc[type] || 0) + 1;
+      return acc;
+    }, {});
+
+    return { tampersByDay, tamperTypes };
+  };
+
+  const analytics = getTamperAnalytics();
+
+  // Tamper timeline chart data
+  const tamperTimelineData = {
+    labels: analytics.tampersByDay.map(d => `${d.date.getMonth() + 1}-${d.date.getDate()}`),
+    datasets: [
+      {
+        label: 'Manual Reports',
+        data: analytics.tampersByDay.map(d => d.manual),
+        borderColor: '#e32d2d',
+        backgroundColor: 'rgba(227, 45, 45, 0.1)',
+        fill: true,
+        tension: 0.4
+      },
+      {
+        label: 'Automated Detections',
+        data: analytics.tampersByDay.map(d => d.automated),
+        borderColor: '#2d5be3',
+        backgroundColor: 'rgba(45, 91, 227, 0.1)',
+        fill: true,
+        tension: 0.4
+      }
+    ]
+  };
+
+  // Tamper type distribution chart data
+  const tamperTypeData = {
+    labels: Object.keys(analytics.tamperTypes),
+    datasets: [{
+      data: Object.values(analytics.tamperTypes),
+      backgroundColor: [
+        '#e32d2d', '#2d5be3', '#ffb300', '#00c853', '#aa00ff',
+        '#ff6d00', '#2979ff', '#00bfa5', '#d500f9', '#ff1744'
+      ]
+    }]
+  };
+
+  const tamperTimelineOptions = {
+    responsive: true,
+    maintainAspectRatio: false,
+    plugins: {
+      legend: {
+        position: 'bottom',
+        labels: { font: { size: 12 } }
+      }
+    },
+    scales: {
+      y: { 
+        beginAtZero: true,
+        ticks: { stepSize: 1 }
+      }
+    }
+  };
+
+  const tamperTypeOptions = {
+    responsive: true,
+    maintainAspectRatio: false,
+    plugins: {
+      legend: {
+        position: 'right',
+        labels: { font: { size: 11 } }
+      }
+    }
   };
 
   return (
@@ -575,10 +693,15 @@ function AdminDashboard() {
             </>
           )}
           {activePage === 'track' && <TrackParcelPage />}
-          {activePage === 'tamperlogs' && <AdminTamperLogs />}
-          {activePage === 'deliverydata' && (
+          {activePage === 'tamperlogs' && <AdminTamperLogs />}          {activePage === 'deliverydata' && (
             <div className="delivery-data-tab">
-              <h2 className="mb-4">Delivery Data</h2>
+              <div className="admin-breadcrumb">Home &gt; Admin &gt; Delivery Data</div>
+              <h2 className="mb-4" style={{ fontSize: '1.8rem', fontWeight: 700, color: '#1a357a' }}>
+                Delivery Analytics
+              </h2>
+
+              {/* Delivery Statistics */}
+              <h3 className="mb-3" style={{ fontSize: '1.4rem', color: '#2d5be3', fontWeight: 600 }}>Parcel Statistics</h3>
               <div className="row">
                 <div className="col-md-6 mb-4">
                   <div className="card" style={{ height: '340px', padding: '1.5rem', borderRadius: '16px', boxShadow: '0 4px 16px rgba(45,91,227,0.07)' }}>
@@ -597,6 +720,29 @@ function AdminDashboard() {
                   </div>
                 </div>
               </div>
+
+              {/* Tamper Analytics */}
+              <h3 className="mb-3" style={{ fontSize: '1.4rem', color: '#e32d2d', fontWeight: 600 }}>Tamper Analytics</h3>
+              <div className="row">
+                <div className="col-md-8 mb-4">
+                  <div className="card" style={{ height: '340px', padding: '1.5rem', borderRadius: '16px', boxShadow: '0 4px 16px rgba(227,45,45,0.07)', border: '1px solid rgba(227,45,45,0.1)' }}>
+                    <h5 className="mb-3">Tamper Frequency (Last 7 Days)</h5>
+                    <div style={{ height: '250px' }}>
+                      <Line data={tamperTimelineData} options={tamperTimelineOptions} />
+                    </div>
+                  </div>
+                </div>
+                <div className="col-md-4 mb-4">
+                  <div className="card" style={{ height: '340px', padding: '1.5rem', borderRadius: '16px', boxShadow: '0 4px 16px rgba(227,45,45,0.07)', border: '1px solid rgba(227,45,45,0.1)' }}>
+                    <h5 className="mb-3">Tamper Type Distribution</h5>
+                    <div style={{ height: '250px' }}>
+                      <Doughnut data={tamperTypeData} options={tamperTypeOptions} />
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              
             </div>
           )}
           {activePage === 'invoices' && (
