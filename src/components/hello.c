@@ -1,5 +1,5 @@
 #include<stdio.h>
 int main() {
-    printf("Hello, World 18 129812 wefhwiufhrwkhw testttt yp yoyyyooy prp ysdhi isdhfuihsfurprp!\n");
+    printf("teri meri meri teri prem kahani testing!\n");
     return 0;
 }
