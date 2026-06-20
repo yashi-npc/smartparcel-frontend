@@ -1,5 +1,5 @@
 #include<stdio.h>
 int main() {
-    printf("teri meri meri teri prem kahani testing!\n");
+    printf("teri meri merihgghghg teri prem kahani testing!\n");
     return 0;
 }
