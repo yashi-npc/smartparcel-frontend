@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import OnTimeDeliveryKPI from './OnTimeDeliveryKPI';
 import { useNavigate } from 'react-router-dom';
 import { QRCodeCanvas } from 'qrcode.react';
 import { fetchAdminParcels, trackParcelById } from '../api/handlerApi';
@@ -49,6 +50,9 @@ function AdminDashboard() {
     setSelectedParcel(parcel);
     setShowEditForm(true);
   };
+
+
+
 
   // Calculate summary stats dynamically
   const today = new Date();
@@ -701,6 +705,8 @@ function AdminDashboard() {
               </h2>
 
               {/* Delivery Statistics */}
+              
+              {/* Delivery Statistics */}
               <h3 className="mb-3" style={{ fontSize: '1.4rem', color: '#2d5be3', fontWeight: 600 }}>Parcel Statistics</h3>
               <div className="row">
                 <div className="col-md-6 mb-4">
@@ -720,6 +726,17 @@ function AdminDashboard() {
                   </div>
                 </div>
               </div>
+              {/* KPI - On-Time Delivery Chart */}
+              <div className="row">
+                <div className="col-md-12 mb-4">
+                  <div className="card" style={{ padding: '1.5rem', borderRadius: '16px', boxShadow: '0 4px 16px rgba(45,91,227,0.07)' }}>
+                    <OnTimeDeliveryKPI />
+                  </div>
+                </div>
+              </div>
+
+
+
 
               {/* Tamper Analytics */}
               <h3 className="mb-3" style={{ fontSize: '1.4rem', color: '#e32d2d', fontWeight: 600 }}>Tamper Analytics</h3>
@@ -741,6 +758,7 @@ function AdminDashboard() {
                   </div>
                 </div>
               </div>
+
 
               
             </div>
